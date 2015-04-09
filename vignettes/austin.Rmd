@@ -9,101 +9,57 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-# Getting Data In
+## Getting Data In
 
-Austin works with any two dimensional matrix-like object for which `is.wfm` returns TRUE.  
-An object is a wfm when it is indexable in two dimensions, has a complete set of row and column names,
-and has the dimension names 'docs' and 'words'.  Whether these are on rows or columns 
-does not matter.  The function `wfm` will construct a suitable object
-from any column and row labeled matrix-like object such as a data.frame or matrix.
+Austin works with any two dimensional matrix-like object for which `is.wfm` returns TRUE.  An object is a wfm when it is indexable in two dimensions, has a complete set of row and column names,
+and has the dimension names 'docs' and 'words'.  Whether these are on rows or columns does not matter.  The function `wfm` will construct a suitable object from any column and row labeled matrix-like object such as a data.frame or matrix.
 
-Austin offers the helper functions
-`as.worddoc` and `as.docword` to extract the raw count
-data the appropriate way up.  That is, as a matrix where words are
-rows and documents are columns, or where documents are rows and words
-are columns.  The `docs` and `words` return vectors of
-document names and words respectively.  `getdocs` is used for
-extracting particular sets of documents from a wfm by name or index.
+Austin offers the helper functions `as.worddoc` and `as.docword` to extract the raw count data the appropriate way up.  That is, as a matrix where words are rows and documents are columns, or where documents are rows and words are columns.  The `docs` and `words` return vectors of document names and words respectively.  `getdocs` is used for extracting particular sets of documents from a wfm by name or index.
 
-The function 
-`trim` can be used to remove low frequency words and words that occur in
-only a few documents.  It can also be used to sample randomly from the set of words.  
-This can be helpful to speed up analyses and check robustness to vocabulary choice.
+The function `trim` can be used to remove low frequency words and words that occur in only a few documents.  It can also be used to sample randomly from the set of words.  This can be helpful to speed up analyses and check robustness to vocabulary choice.
 
-## Importing CSV Data
+### Importing CSV Data
 
-If you already have word frequency data in a file in comma-separated value
-(.csv) format you can read it in using
+```{r, echo=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+If you already have word frequency data in a file in comma-separated value (.csv) format you can read it in using
 ```{r,eval=FALSE}
 data <- wfm('mydata.csv')
 ```
-This function assumes that the word labels are in the first column and 
-document names are in the first row, pretty much as
-[JFreq](http://www.conjugateprior.org/software/jfreq) would offer it to
-you by default.  Assuming that words are rows and documents are columns
-use.  If words are columns, add a `word.margin=2` argument.  
+This function assumes that the word labels are in the first column and document names are in the first row, pretty much as [JFreq](http://www.conjugateprior.org/software/jfreq) would offer it to you by default.  Assuming that words are rows and documents are columnsuse.  If words are columns, add a `word.margin=2` argument.  
 
-## Counting Words from Inside R
+### Counting Words from Inside R
 
-Assuming Java is installed on your system then you can count words in
-text files and generate an appropriate `wfm` object in one step
-using the `jwordfreq` (Although you'll
-  probably have more control over the process using JFreq).
+Assuming Java is installed on your system then you can count words in text files and generate an appropriate `wfm` object in one step using the `jwordfreq` (Although you'll  probably have more control over the process using JFreq).
 
 # Scaling with Wordfish
 
 Austin implements the one dimensional text scaling model Wordfish
-\citep{SlapinProksch2008,ProkschSlapin2008}.  When document positions
+(Slapin and Proksch, 2008).  When document positions
 are random variables the model is known as Rhetorical Ideal Points
-\citep{MonroeMaeda04} which is formally equivalent to a Item Response
-Theory and closely related to the generalized Latent Trait models with a Poisson link
-\citep[e.g.][]{MoustakiKnott2000}.  
+(Monroe and Maeda, 2004) which is formally equivalent to a Item Response
+Theory and closely related to the generalized Latent Trait models with a Poisson link, e.g. Moustaki and Knott 2000.  
 
 Austin
 implements a version of Wordfish with faster convergence, analytic
 or bootstrapped standard errors, and integration into R's usual model
 functions, `summary`, `coef`, `predict`, etc.
 
-This model class has two equivalent parameterizations.  Assume $D$
-documents, $V$ words, and a $D\times V$ matrix of word counts $Y$.
-Represent the $i$th row as $y_i=[Y_{i1}\ldots Y_{iV}]$ which contains
-$N_i=\sum y_i$ words in total.  In the first parameterization
-
-$P(y_i \mid \theta) &= \prod^D_{j=1} P(Y_{ij} \mid \theta_i)$
-
-$
-P(Y_{ij} \mid \theta_i) &= \text{Poisson}(\mu_{ij})
-\mu_{ij} &= \psi_j + \beta_j\theta_i + \alpha_i.
-$
-That is, word counts are conditionally independent given
-knowledge of the text's position, and conditional on position word
-counts are independent Poisson processes depending on word-specific
-intercept and slope parameters and document-specific position and offset
-parameters.
+This model class has two equivalent parameterizations: In the first, word counts are Poisson processes with means conditional on document position `theta`, word positions `beta`, document specific offsets `alpha` and word-specific offsets `psi`.
 
 In the Austin implementation the
 parameters are estimated by a Conditional Maximum Likelihood with a
-regularization constraint on $\beta$s that is interpretable as a
-shared zero mean prior with standard deviation $\sigma$.  
+regularization constraint on `beta`s that is interpretable as a
+shared zero mean prior with standard deviation `sigma`.  
 
-If we assume that the length of a document $N_i$ is uninformative
-about $\theta_i$, we may condition on it.  This leads to second
-Multinomial parameterization of the model
-$
-P(y_i \mid \theta) &= \text{Multinomial}(\pi_{ij}, N_i)
-$
-where
-$
-\log \frac{\pi_j}{\pi_1} &= \psi_j^* + \beta_j^* \theta_i 
-$
-and the starred parameters are linear transformations of their
-namesakes in the first parameterization and the document specific
-offsets cancel out \citep{LoweWF}.  This is the form of
+Alternatively, conditioning on each document's length gives a multinomial parameterisation in terms of `theta` as before, logits of word rates using the first word as the baseline.  This is the form of
 the model reported by Austin and used for prediction.  
 Austin treats
 the first parameterization as a computational convenience to make
 estimation more efficient.  The `coef` function takes a `form`
-parameter if you need to see it.
+parameter if you need to see the other parameterisation.
 
 We start by loading the package
 ```{r}
@@ -131,7 +87,7 @@ To scale this data we use the wordfish function
 wf <- wordfish(dd$Y)
 ```
 The model is by default globally identified by requiring that
-$\hat{\theta}_{10} > \hat{\theta}_1$.  This will
+`theta[10] > theta[1]`.  This will
 be true for all simulated data (with more than 10 documents).  For real
 data more suitable values may be set using the `dir` argument.
 
@@ -151,7 +107,7 @@ graphed (For more than a few tens of words the confidence
 to the plot function is taken as a vector of true document positions.
 These are then plotted over the original plot, as shown in Figure~\ref{fig1}.
 
-```{r,echo=FALSE,fig=TRUE}
+```{r,echo=FALSE,fig=TRUE,fig.width = 5,fig.height = 5}
 plot(wf, dd$theta)
 ```
 
@@ -164,12 +120,12 @@ predict(wf, newdata=getdocs(dd$Y, c(4,5)), se.fit=TRUE, interval='conf')
 
 # Scaling with Wordscores
 
-Wordscores \citep{Laveretal2003} is a method for scaling texts closely
+Wordscores (Laver et al. 2003) is a method for scaling texts closely
 related to both correspondence analysis by implementing an incomplete
 reciprocal averaging algorithm, and to quadratic ordination as an
-approximation to an unfolding model \citep{Lowe2008}.
+approximation to an unfolding model (Lowe 2008, 2014).
 
-Austin refers to the algorithm described in \citep{Laveretal2003} as
+Austin refers to the algorithm described in Laver et al. 2003 as
 `classic' Wordscores to distinguish it from versions closer to
 correspondence analysis.  A classic Wordscores analysis has several
 distinguishing features.
@@ -190,7 +146,7 @@ standard errors for the out of sample documents (These are
   would have to be derived is unclear and partly because they can be 
   quite implausible in some applications).
 
-To replicate the example analysis in Laver et al. (2003) we begin loading
+To replicate the example analysis in Laver et al. we begin loading
 the test data
 ```{r}
 data(lbg)
@@ -209,7 +165,7 @@ vir <- getdocs(lbg, 'V1')
 ```
 then fit the model using the reference documents
 ```{r}
-ws <- classic.wordscores(ref, scores=seq(-1.5,1.5,by=0.75))
+ws <- classic.wordscores(ref, scores=seq(-1.5, 1.5, by=0.75))
 ```
 We can summarise the results
 ```{r}
@@ -236,55 +192,17 @@ Wordscores approximates correspondence analysis, which is defined for
 more than one dimension.  To explore this approach to document scaling
 you may find the `ca` or `anacor` packages useful.  A rather limited subset of correspondence analysis is implemented by the MASS package's `corresp` function.  
 
-\newpage
-\bibliographystyle{apsr}
+# References
 
-\bibliography{austin}
+Laver, Michael, and John Garry. 2000. “Estimating Policy Positions from Political Texts.” American Journal of Political Science 44(3): 619–34.
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+Lowe, Will. 2008. “Understanding Wordscores.” Political Analysis 16(4): 356–71.
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+Lowe, Will. 2013. “There’s (basically) Only One Way to Do It.” Paper presented at APSA 2013, Chicago IL. Available at [SSRN](http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2318543).
 
-## Vignette Info
+Monroe, Burt L., and Ko Maeda. 2004. “Talk’s Cheap: Text-Based Estimation of Rhetorical Ideal-Points.”
 
-Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+Moustaki, Irini, and Martin Knott. 2000. “Generalized Latent Trait Models.” Psychometrika 65(3): 391–411.
 
-## Styles
+Slapin, Jonathan B., and Sven-Oliver Proksch. 2008. “A Scaling Model for Estimating Time-Series Party Positions from Texts.” American Journal of Political Science 52(3): 705–22.
 
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
-```
-
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
-
-Also a quote using `>`:
-
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))

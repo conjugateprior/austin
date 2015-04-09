@@ -96,9 +96,10 @@ summary.classic.wordscores <- function(object, ...){
 #' @return The wordscores
 #' @author Will Lowe
 #' @seealso \code{\link{classic.wordscores}}
+#' @export
 #' @method coef classic.wordscores
 coef.classic.wordscores <- function(object, ...){
-    return(object$pi)
+  return(object$pi)
 }
 
 #' Plot a Wordscores Model
