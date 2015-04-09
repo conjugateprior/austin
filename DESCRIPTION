@@ -8,7 +8,8 @@ Maintainer: Will Lowe <conjugateprior@gmail.com>
 Description: Doing things with words currently means scaling documents on a presumed underlying dimension on the basis of word frequencies and heroic assumptions about language generation.
 URL: http://github.com/conjugateprior/austin
 BugReports: http://github.com/conjugateprior/austin/issues
-Depends: R (>= 2.10), numDeriv
+Depends: R (>= 2.10)
+Imports: numDeriv
 License: GPL-2
 LazyLoad: yes
 Suggests: knitr

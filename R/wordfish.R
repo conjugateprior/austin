@@ -36,6 +36,7 @@
 #' \item{ll}{final log likelihood} \item{se.theta}{standard errors for document
 #' position} \item{data}{the original data}
 #' @author Will Lowe
+#' @importFrom numDeriv hessian
 #' @seealso \code{\link{plot.wordfish}}, \code{\link{summary.wordfish}},
 #' \code{\link{coef.wordfish}}, \code{\link{fitted.wordfish}},
 #' \code{\link{predict.wordfish}}, \code{\link{sim.wordfish}}
@@ -265,7 +266,7 @@ wordfish <- function(wfm,
         model$theta[i] <- optimize(mnll, interval=c(-6,6), new.beta, new.psi,
                                    tY[i,], maximum=TRUE)$maximum
         ## numerical hessian
-        neghess <- -numDeriv::hessian(mnll, model$theta[i], b=new.beta, p=new.psi, y=tY[i,])
+        neghess <- -hessian(mnll, model$theta[i], b=new.beta, p=new.psi, y=tY[i,])
         invneghess <- solve(neghess)
         model$se.theta[i] <- sqrt(invneghess)
     }
@@ -437,6 +438,7 @@ print.summary.wordfish <- function(x,
 #' of predictions and bounds with column names `fit' and `se.fit', and with
 #' `lwr', and `upr' if `interval' is also set.
 #' @author Will Lowe
+#' @importFrom numDeriv hessian
 #' @seealso \code{\link{wordfish}}
 #' @export
 #' @method predict wordfish
@@ -477,7 +479,7 @@ predict.wordfish <- function(object,
     for (i in 1:NROW(newd)){
         preds[i] <- optimize(mnll, interval=c(-6,6), new.beta, new.psi, newd[i,], maximum=TRUE)$maximum
         if (se.fit){
-            neghess <- -numDeriv::hessian(mnll, preds[i], b=new.beta, p=new.psi, y=newd[i,])
+            neghess <- -hessian(mnll, preds[i], b=new.beta, p=new.psi, y=newd[i,])
             invneghess <- solve(neghess)
             preds.se[i] <- sqrt(invneghess)
         }
