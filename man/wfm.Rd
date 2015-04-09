@@ -1,0 +1,65 @@
+\name{wfm}
+\alias{wfm}
+\title{Word Frequency Matrix}
+\description{A word count matrix that know which margin holds the words.}
+\usage{wfm(mat, word.margin=1)}
+\arguments{
+  \item{mat}{matrix of word counts or the name of a csv file of word counts}
+  \item{word.margin}{which margin holds the words}
+}
+\value{
+  A word frequency matrix from a suitable object, or read from a
+  file if \code{mat} is character.  Which margin is treated as
+  representing words is set by \code{word.margin}.
+}
+\details{
+  If \code{mat} is a filename it should name a 
+  comma separated value format with row labels in the first column
+  and column labels in the first row.  Which represents words
+  and which documents is specified by \code{word.margin}, which
+  defaults to words as rows.
+
+  A word frequency matrix is defined as any two dimensional 
+  matrix with non-empty row and column names and 
+  dimnames 'words' and 'docs' (in either order).
+  The actual class of such an object is not important for 
+  the operation of the functions in this package, so wfm is 
+  essentially an interface.  
+  The function \code{\link{is.wfm}} is a (currently rather loose) check 
+  whether an object fulfils the interface contract.
+  
+  For such objects the convenience accessor functions
+  \code{\link{as.docword}} and
+  \code{\link{as.worddoc}} can be used to to get counts
+  whichever way up you need them.
+
+  \code{\link{words}} returns the words and \code{\link{docs}} 
+  returns the document titles.  \code{\link{wordmargin}} 
+  reminds you which margin contains the words.
+  Assigning \code{wordmargin} flips the dimension names.
+
+  To get extract particular documents by name or index, use \link{getdocs}.
+
+  \code{\link{as.wfm}} attempts to convert 
+  things to be word frequency matrices.  This functionality
+  is currently limited to
+  objects on which \code{as.matrix} already works, and to 
+  \code{TermDocument} and \code{DocumentTerm} objects from the 
+  \code{tm} package.
+}
+\seealso{\code{\link{as.wfm}},
+  \code{\link{as.docword}},
+  \code{\link{as.worddoc}},
+  \code{\link{docs}},
+  \code{\link{words}},
+  \code{\link{is.wfm}},
+  \code{\link{wordmargin}}
+}
+\examples{
+mat <- matrix(1:6, ncol=2)	
+rownames(mat) <- c('W1','W2','W3')
+colnames(mat) <- c('D1','D2')
+m <- wfm(mat, word.margin=1)
+getdocs(as.docword(m), 'D2')
+}
+\author{Will Lowe}

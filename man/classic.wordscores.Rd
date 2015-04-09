@@ -1,0 +1,40 @@
+\name{classic.wordscores}
+\alias{classic.wordscores}
+\title{Old-Style Wordscores}
+\description{Construct a Wordscores model from reference document scores}
+\usage{
+classic.wordscores(wfm, scores)
+}
+\arguments{
+  \item{wfm}{object of class wfm}
+  \item{scores}{reference document positions/scores}
+}
+\details{
+  This version of Wordscores is exactly as described in Laver et al.
+  2003 and is provided for historical interest and continued replicability
+  of older analyses.
+  
+  \code{scores} is a vector of document scores corresponding to the
+  documents in the word frequency matrix \code{wfm}.
+  The function computes wordscores and returns a model from which
+  virgin text scores can be predicted.
+}
+\value{
+  An old-style Wordscores analysis.
+}
+\seealso{\code{\link{summary.classic.wordscores}}}
+
+\references{
+  Laver, M. and Benoit, K. and Garry, J. (2003) 'Extracting policy
+  positions from political texts using words as data' American Political
+  Science Review. 97. pp.311-333
+}
+\author{Will Lowe}
+\examples{
+data(lbg)
+ref <- getdocs(lbg, 1:5)
+ws <- classic.wordscores(ref, scores=seq(-1.5,1.5,by=0.75))
+summary(ws)
+vir <- getdocs(lbg, 'V1') 
+predict(ws, newdata=vir)
+}

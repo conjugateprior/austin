@@ -1,0 +1,14 @@
+citHeader("To cite austin in publications use:")
+
+citEntry(entry="Manual",
+         title = "Austin: Do things with words",
+         author = "Will Lowe",
+         year   = version$year,
+         url    = "http://www.williamlowe.net/austin",
+         textVersion = 
+         paste("Will Lowe (", version$year, "). ", 
+               "Austin: Do things with words. ",
+               "URL http://r-forge.r-project.org/projects/austin",
+               sep="")
+         )
+
