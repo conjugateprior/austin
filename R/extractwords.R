@@ -1,3 +1,15 @@
+#' Pull Words From a List
+#' 
+#' Extract a list of matching words from another list of words
+#' 
+#' 
+#' @param words the words against which patters are matched
+#' @param patternfile file containing the patters to match, one per line
+#' @param pattern.type marks whether the patterns are 'globs' or full regular
+#' expressions
+#' @return A list of matching words.
+#' @export
+#' @author Will Lowe
 extractwords <- function(words,
                          patternfile,
                          pattern.type=c('glob', 're')){

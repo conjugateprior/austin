@@ -1,3 +1,18 @@
+#' Count Words in Documents
+#' 
+#' Create a word document count matrix from texts
+#' 
+#' Runs the java code (with no error checking!)
+#' 
+#' @param filenames a list of filenames
+#' @param includenums if `TRUE' count occurrences of number words
+#' @param renamecols if `TRUE' rename columns
+#' @param stem if `TRUE' strip down to english stems
+#' @param encoding name of document encoding
+#' @param verbose show the command line used to run the java archive
+#' @return An object of class wfm.
+#' @author Will Lowe
+#' @export wordfreqj
 wordfreqj <- function(filenames,
                       includenums=FALSE,
                       renamecols=FALSE,

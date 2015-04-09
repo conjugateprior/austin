@@ -1,3 +1,54 @@
+#' Estimate a Wordfish Model
+#' 
+#' Estimates a Wordfish model using Conditional Maximum Likelihood.
+#' 
+#' Fits a Wordfish model with document ideal points constrained to mean zero
+#' and unit standard deviation.
+#' 
+#' The \code{control} list specifies options for the estimation process.  These
+#' are: \code{tol}, the proportional change in log likelihood sufficient to
+#' halt estimation, \code{sigma} the standard deviation for the beta prior in
+#' poisson form, and \code{startparams} a previously fitted wordfish model.
+#' \code{verbose} generates a running commentary during estimation
+#' 
+#' The model has two equivalent forms: a poisson model with two sets of
+#' document and two sets of word parameters, and a multinomial with two sets of
+#' word parameters and document ideal points.  The first form is used for
+#' estimation, the second for summarizing and prediction.
+#' 
+#' The model is regularized by assuming a prior on beta with mean zero and
+#' standard deviation sigma (in poisson form).  If you don't want to
+#' regularize, set beta to a large number.
+#' 
+#' @param wfm a word frequency matrix
+#' @param dir set global identification by forcing \code{theta[dir[1]]} <
+#' \code{theta[dir[2]]}
+#' @param control list of estimation options
+#' @param verbose produce a running commentary
+#' @return An object of class wordfish.  This is a list containing:
+#' 
+#' \item{dir}{global identification of the dimension} \item{theta}{document
+#' positions} \item{alpha}{document fixed effects} \item{beta}{word slope
+#' parameters} \item{psi}{word fixed effects} \item{docs}{names of the
+#' documents} \item{words}{names of words} \item{sigma}{regularization
+#' parameter for betas in poisson form}
+#' 
+#' \item{ll}{final log likelihood} \item{se.theta}{standard errors for document
+#' position} \item{data}{the original data}
+#' @author Will Lowe
+#' @seealso \code{\link{plot.wordfish}}, \code{\link{summary.wordfish}},
+#' \code{\link{coef.wordfish}}, \code{\link{fitted.wordfish}},
+#' \code{\link{predict.wordfish}}, \code{\link{sim.wordfish}}
+#' @references Slapin and Proksch (2008) 'A Scaling Model for Estimating
+#' Time-Series Party Positions from Texts.' American Journal of Political
+#' Science 52(3):705-772.
+#' @examples
+#' 
+#' dd <- sim.wordfish()
+#' wf <- wordfish(dd$Y)
+#' summary(wf)
+#' 
+#' @export
 wordfish <- function(wfm,
                      dir=c(1, 10),
                      control=list(tol=1e-06, sigma=3,
@@ -26,8 +77,6 @@ wordfish <- function(wfm,
     D  <- NROW(tY)
     V  <- NCOL(tY)
     wfm <- NULL   ## two copies are quite enough
-
-    require(numDeriv) ## for the standard errors
 
     ## enforce control defaults
     tol <- ifelse(is.null(control$tol), 1e-06, control$tol)
@@ -124,7 +173,7 @@ wordfish <- function(wfm,
             cat(iter, "\t")
 
         ## Estimate first theta (alpha = 0)
-        resa <- optim(p=c(params$theta[1]),
+        resa <- optim(par=c(params$theta[1]),
                       fn=LL.first.theta,
                       gr=NULL,
                       y=as.numeric(Y[,1]),
@@ -216,7 +265,7 @@ wordfish <- function(wfm,
         model$theta[i] <- optimize(mnll, interval=c(-6,6), new.beta, new.psi,
                                    tY[i,], maximum=TRUE)$maximum
         ## numerical hessian
-        neghess <- -hessian(mnll, model$theta[i], b=new.beta, p=new.psi, y=tY[i,])
+        neghess <- -numDeriv::hessian(mnll, model$theta[i], b=new.beta, p=new.psi, y=tY[i,])
         invneghess <- solve(neghess)
         model$se.theta[i] <- sqrt(invneghess)
     }
@@ -225,6 +274,8 @@ wordfish <- function(wfm,
     return(model)
 }
 
+##' @method print wordfish
+##' @export
 print.wordfish <- function(x,
                            digits=max(3,getOption('digits')-3),
                            ...){
@@ -236,7 +287,28 @@ print.wordfish <- function(x,
     print(pp, digits=digits)
 }
 
-
+#' Extract Word Parameters
+#' 
+#' Extract word parameters beta and psi in an appropriate model
+#' parameterization
+#' 
+#' Slope parameters and intercepts are labelled beta and psi respectively.  In
+#' multinomial form the coefficient names reflect the fact that the
+#' first-listed word is taken as the reference category.  In poisson form, the
+#' coefficients are labeled by the words the correspond to.
+#' 
+#' Note that in both forms there will be beta and psi parameters, so make sure
+#' they are the ones you want.
+#' 
+#' @param object an object of class wordfish
+#' @param form which parameterization of the model to return parameters for
+#' @param ... extra arguments
+#' @return A data.frame of word parameters from a wordfish model in one or
+#' other parameterization.
+#' @author Will Lowe
+#' @export
+#' @method coef wordfish
+#' @seealso \code{\link{wordfish}}
 coef.wordfish <- function(object, form=c('multinomial', 'poisson'), ...){
     m <- object
     fm <- match.arg(form)
@@ -266,6 +338,20 @@ print.coef.wordfish <- function(x,
         print(x$docs, digits=digits)
 }
 
+#' Plot the Word Parameters From a Wordfish Model
+#' 
+#' Plots sorted beta and optionally also psi parameters from a Wordfish model
+#' 
+#' 
+#' @param x a fitted Wordfish model
+#' @param pch Default is to use small dots to plot positions
+#' @param psi whether to plot word fixed effects
+#' @param ... Any extra graphics parameters to pass in
+#' @return A plot of sorted beta and optionally psi parameters.
+#' @author Will Lowe
+#' @seealso \code{\link{wordfish}}
+#' @export
+#' @method plot coef.wordfish
 plot.coef.wordfish <- function(x, pch=20, psi=TRUE, ...){
 
     if (!is(x, "coef.wordfish"))
@@ -294,6 +380,22 @@ plot.coef.wordfish <- function(x, pch=20, psi=TRUE, ...){
     }
 }
 
+#' Summarize a Wordfish Model
+#' 
+#' Summarises estimated document positions from a fitted Wordfish model
+#' 
+#' if `level' is passed to the function, e.g. 0.95 for 95 percent confidence,
+#' this generates the appropriate width intervals.
+#' 
+#' @param object fitted wordfish model
+#' @param level confidence interval coverage
+#' @param ... extra arguments, e.g. level
+#' @return A data.frame containing estimated document position with standard
+#' errors and confidence intervals.
+#' @author Will Lowe
+#' @seealso \code{\link{wordfish}}
+#' @export
+#' @method summary wordfish
 summary.wordfish <- function(object, level=0.95, ...){
     m <- object
     pp <- predict(m, se.fit=TRUE, interval='confidence')
@@ -304,6 +406,8 @@ summary.wordfish <- function(object, level=0.95, ...){
     return(ret)
 }
 
+#' @method print summary.wordfish
+#' @export
 print.summary.wordfish <- function(x,
                           digits=max(3,getOption('digits')-3),
                                    ...){
@@ -313,6 +417,29 @@ print.summary.wordfish <- function(x,
     print(x$scores, digits=digits)
 }
 
+#' Predict Method for Wordfish
+#' 
+#' Predicts positions of new documents using a fitted Wordfish model
+#' 
+#' Standard errors for document positions are generated by numerically
+#' inverting the relevant Hessians from the profile likelihood of the
+#' multinomial form of the model.
+#' 
+#' @param object A fitted wordfish model
+#' @param newdata An optional data frame or object of class wfm in which to
+#' look for word counts to predict document ideal points which to predict.  If
+#' omitted, the fitted values are used.
+#' @param se.fit A switch indicating if standard errors are required.
+#' @param interval Type of interval calculation
+#' @param level Tolerance/confidence level
+#' @param ... further arguments passed to or from other methods.
+#' @return \code{predict.wordfish} produces a vector of predictions or a matrix
+#' of predictions and bounds with column names `fit' and `se.fit', and with
+#' `lwr', and `upr' if `interval' is also set.
+#' @author Will Lowe
+#' @seealso \code{\link{wordfish}}
+#' @export
+#' @method predict wordfish
 predict.wordfish <- function(object,
                              newdata=NULL,
                              se.fit=FALSE,
@@ -350,7 +477,7 @@ predict.wordfish <- function(object,
     for (i in 1:NROW(newd)){
         preds[i] <- optimize(mnll, interval=c(-6,6), new.beta, new.psi, newd[i,], maximum=TRUE)$maximum
         if (se.fit){
-            neghess <- -hessian(mnll, preds[i], b=new.beta, p=new.psi, y=newd[i,])
+            neghess <- -numDeriv::hessian(mnll, preds[i], b=new.beta, p=new.psi, y=newd[i,])
             invneghess <- solve(neghess)
             preds.se[i] <- sqrt(invneghess)
         }
@@ -371,6 +498,22 @@ predict.wordfish <- function(object,
     return(res)
 }
 
+#' Plot a Wordfish Model
+#' 
+#' Plots a fitted Wordfish model with confidence intervals
+#' 
+#' 
+#' @param x a fitted Wordfish model
+#' @param truevals True document positions if known
+#' @param level Intended coverage of confidence intervals
+#' @param pch Default is to use small dots to plot positions
+#' @param ... Any extra graphics parameters to pass in
+#' @return A plot of sorted estimated document positions, with confidence
+#' intervals and true document positions, if these are available.
+#' @author Will Lowe
+#' @export
+#' @seealso \code{\link{wordfish}}
+#' @method plot wordfish
 plot.wordfish <- function(x,
                           truevals=NULL,
                           level=0.95,
@@ -413,6 +556,35 @@ plot.wordfish <- function(x,
 ##    if (se){ se.theta <- se.theta / sdt }
 ##}
 
+
+
+#' Simulate data and parameters for a Wordfish model
+#' 
+#' Simulates data and returns parameter values using Wordfish model
+#' assumptions: Counts are sampled under the assumption of independent Poisson
+#' draws with log expected means linearly related to a lattice of document
+#' positions.
+#' 
+#' This function draws `docs' document positions from a Normal distribution, or
+#' regularly spaced between 1/`docs' and 1.
+#' 
+#' `vocab'/2 word slopes are 1, the rest -1.  All word intercepts are 0.
+#' `doclen' words are then sampled from a multinomial with these parameters.
+#' 
+#' Document position (theta) is sorted in increasing size across the documents.
+#' If `scaled' is true it is normalized to mean zero, unit standard deviation.
+#' This is most helpful when dist=normal.
+#' 
+#' @param docs How many `documents' should be generated
+#' @param vocab How many `word' types should be generated
+#' @param doclen A scalar `document' length or vector of lengths
+#' @param dist the distribution of `document' positions
+#' @param scaled whether the document positions should be mean 0, unit sd
+#' @return \item{Y}{A sample word-document matrix} \item{theta}{The `document'
+#' positions} \item{doclen}{The `document' lengths} \item{beta}{`Word'
+#' intercepts} \item{psi}{`Word' slopes}
+#' @author Will Lowe
+#' @export sim.wordfish
 sim.wordfish <- function(docs=10,
                          vocab=20,
                          doclen=500,
@@ -475,6 +647,17 @@ sim.wordfish <- function(docs=10,
     return(val)
 }
 
+#' Get Fitted Values from a Wordfish Model
+#' 
+#' Extracts the estimated word rates from a fitted Wordfish model
+#' 
+#' 
+#' @param object a fitted Wordfish model
+#' @param ... Unused
+#' @return Expected counts in the word frequency matrix
+#' @author Will Lowe
+#' @export
+#' @method fitted wordfish
 fitted.wordfish <- function(object, ...){
     m <- object
     n <- as.numeric(colSums(m$data))
@@ -486,6 +669,28 @@ fitted.wordfish <- function(object, ...){
     return(t(mm))
 }
 
+#' initialize.urfish
+#' 
+#' Get cheap starting values for a Wordfish model
+#' 
+#' This function is only called by model fitting routines and does therefore
+#' not take a wfm classes.  tY is assumed to be in document by term form.
+#' 
+#' In the poisson form of the model incidental parameters (alpha) are set to
+#' log(rowmeans/rowmeans[1]).  intercept (psi) values are set to log(colmeans)
+#' These are subtracted from a the data matrix, which is logged and decomposed
+#' by SVD.  Word slope (beta) and document position (theta) are estimated by
+#' rescaling SVD output.
+#' 
+#' @param tY a document by word matrix of counts
+#' @return List with elements: \item{alpha}{starting values of alpha
+#' parameters} \item{psi}{starting values of psi parameters}
+#' \item{beta}{starting values of beta parameters} \item{theta}{starting values
+#' for document positions}
+#' @author Will Lowe
+#' @references This is substantially the method used by Slapin and Proksch's
+#' original code.
+#' @export initialize.urfish
 initialize.urfish <- function(tY){
     ## mostly the initialization routine from S&P
 
@@ -526,6 +731,22 @@ initialize.urfish <- function(tY){
     return(params)
 }
 
+#' Compute Bootstrap Standard Errors
+#' 
+#' Computes bootstrap standard errors for document positions from a fitted
+#' Wordfish model
+#' 
+#' This function computes a parametric bootstrap by resampling counts from the
+#' fitted word counts, refitting the model, and storing the document positions.
+#' The standard deviations for each resampled document position are returned.
+#' 
+#' @param object a fitted Wordfish model
+#' @param L how many replications
+#' @param verbose Give progress updates
+#' @param ... Unused
+#' @return Standard errors for document positions
+#' @author Will Lowe
+#' @export bootstrap.se
 bootstrap.se <- function(object, L=50, verbose=FALSE, ...){
     if (is(object, 'wordfish')){
         m <- object
