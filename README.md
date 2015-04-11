@@ -8,3 +8,5 @@ from the original.  Development on the old version is now stopped
 and further developments will appear here.
 
 Will Lowe, March 2015
+
+[![Build Status](https://travis-ci.org/conjugateprior/austin.svg?branch=master)](https://travis-ci.org/conjugateprior/austin.svg?branch=master)
