@@ -1,0 +1,8 @@
+language: r
+
+sudo: required
+
+r_packages:
+ - knitr
+ - rmarkdown
+ - testthat
