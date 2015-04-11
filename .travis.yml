@@ -4,4 +4,5 @@ sudo: required
 
 r_binary_packages:
  - knitr
+ - rmarkdown
  - testthat
