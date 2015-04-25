@@ -23,4 +23,6 @@ That's it.
 
 
 
-"Does she go?"  [![Build Status](https://travis-ci.org/conjugateprior/austin.svg?branch=master)](https://travis-ci.org/conjugateprior/austin)
+"Does she go?"  
+
+[![Build Status](https://travis-ci.org/conjugateprior/austin.svg?branch=master)](https://travis-ci.org/conjugateprior/austin)

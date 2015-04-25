@@ -1,7 +1,7 @@
 Package: austin
 Type: Package
 Title: Do things with words
-Version: 0.2.1
+Version: 0.2.2
 Date: 2011-03-24
 Author: Will Lowe
 Maintainer: Will Lowe <conjugateprior@gmail.com>
