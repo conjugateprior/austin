@@ -73,11 +73,11 @@ wordfish <- function(wfm,
     else
         wfm <- wfm[,good.words]
 
-    Y <- as.worddoc(wfm)
+    #Y <- as.worddoc(wfm)
     tY <- as.docword(wfm)
     D  <- NROW(tY)
     V  <- NCOL(tY)
-    wfm <- NULL   ## two copies are quite enough
+    wfm <- NULL   ## one version is quite enough
 
     ## enforce control defaults
     tol <- ifelse(is.null(control$tol), 1e-06, control$tol)
@@ -141,23 +141,21 @@ wordfish <- function(wfm,
     if (!is.null(control$startparams)) {
         inc <- control$startparams
         pars <- coef(inc, form='poisson')
-
-	## fill in known word parameters if they're available
-        inter <- intersect(good.words, rownames(pars$words)) 
+      ## fill in known word parameters if they're available
+      inter <- intersect(good.words, rownames(pars$words)) 
 	
-	med.beta <- median(pars$words$beta)
-	med.psi <- median(pars$words$psi)
-        newpars <- matrix(rep(c(med.beta, med.psi), each=length(good.words)), 
-                          ncol=2, dimnames=list(good.words, c('beta', 'psi')))  
+	    med.beta <- median(pars$words$beta)
+	    med.psi <- median(pars$words$psi)
+      newpars <- matrix(rep(c(med.beta, med.psi), each=length(good.words)), 
+                    ncol=2, dimnames=list(good.words, c('beta', 'psi')))  
         
-        newpars[inter,'beta'] <- pars$words[inter,'beta']
-        newpars[inter,'psi'] <- pars$words[inter,'psi']
+      newpars[inter,'beta'] <- pars$words[inter,'beta']
+      newpars[inter,'psi'] <- pars$words[inter,'psi']
 	
-        params <- list(beta=newpars[,'beta'],
-                       psi=newpars[,'psi'],
-                       alpha=pars$docs$alpha,
-                       theta=inc$theta)
-
+      params <- list(beta=newpars[,'beta'],
+                   psi=newpars[,'psi'],
+                   alpha=pars$docs$alpha,
+                   theta=inc$theta)
     } else {
         params <- initialize.urfish(tY)
     }
@@ -177,7 +175,7 @@ wordfish <- function(wfm,
         resa <- optim(par=c(params$theta[1]),
                       fn=LL.first.theta,
                       gr=NULL,
-                      y=as.numeric(Y[,1]),
+                      y=as.numeric(tY[1,]),
                       beta=params$beta,
                       psi=params$psi,
                       method=c("BFGS")
@@ -191,7 +189,7 @@ wordfish <- function(wfm,
             resa <- optim(par=c(params$theta[i], params$alpha[i]),
                           fn=LL.alpha.theta,
                           gr=DLL.alpha.theta,
-                          y=as.numeric(Y[,i]),
+                          y=as.numeric(tY[i,]),
                           beta=params$beta,
                           psi=params$psi,
                           method=c('BFGS')
@@ -250,7 +248,7 @@ wordfish <- function(wfm,
                   words=words(tY),
                   sigma=sigma,
                   ll=ll,
-                  data=Y,
+                  data=t(tY),
                   call=thecall)
 
     ## asymptotic standard errors (in multinomial form)
