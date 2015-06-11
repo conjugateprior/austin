@@ -1,0 +1,208 @@
+---
+title: "Introduction to Austin"
+author: "Will Lowe"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to Austin}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+## Getting Data In
+
+Austin works with any two dimensional matrix-like object for which `is.wfm` returns TRUE.  An object is a wfm when it is indexable in two dimensions, has a complete set of row and column names,
+and has the dimension names 'docs' and 'words'.  Whether these are on rows or columns does not matter.  The function `wfm` will construct a suitable object from any column and row labeled matrix-like object such as a data.frame or matrix.
+
+Austin offers the helper functions `as.worddoc` and `as.docword` to extract the raw count data the appropriate way up.  That is, as a matrix where words are rows and documents are columns, or where documents are rows and words are columns.  The `docs` and `words` return vectors of document names and words respectively.  `getdocs` is used for extracting particular sets of documents from a wfm by name or index.
+
+The function `trim` can be used to remove low frequency words and words that occur in only a few documents.  It can also be used to sample randomly from the set of words.  This can be helpful to speed up analyses and check robustness to vocabulary choice.
+
+### Importing CSV Data
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+If you already have word frequency data in a file in comma-separated value (.csv) format you can read it in using
+```{r,eval=FALSE}
+data <- wfm('mydata.csv')
+```
+This function assumes that the word labels are in the first column and document names are in the first row, pretty much as [JFreq](http://www.conjugateprior.org/software/jfreq) would offer it to you by default.  Assuming that words are rows and documents are columnsuse.  If words are columns, add a `word.margin=2` argument.  
+
+### Counting Words from Inside R
+
+Assuming Java is installed on your system then you can count words in text files and generate an appropriate `wfm` object in one step using the `jwordfreq` (Although you'll  probably have more control over the process using JFreq).
+
+# Scaling with Wordfish
+
+Austin implements the one dimensional text scaling model Wordfish
+(Slapin and Proksch, 2008).  When document positions
+are random variables the model is known as Rhetorical Ideal Points
+(Monroe and Maeda, 2004) which is formally equivalent to a Item Response
+Theory and closely related to the generalized Latent Trait models with a Poisson link, e.g. Moustaki and Knott 2000.  
+
+Austin
+implements a version of Wordfish with faster convergence, analytic
+or bootstrapped standard errors, and integration into R's usual model
+functions, `summary`, `coef`, `predict`, etc.
+
+This model class has two equivalent parameterizations: In the first, word counts are Poisson processes with means conditional on document position `theta`, word positions `beta`, document specific offsets `alpha` and word-specific offsets `psi`.
+
+In the Austin implementation the
+parameters are estimated by a Conditional Maximum Likelihood with a
+regularization constraint on `beta`s that is interpretable as a
+shared zero mean prior with standard deviation `sigma`.  
+
+Alternatively, conditioning on each document's length gives a multinomial parameterisation in terms of `theta` as before, logits of word rates using the first word as the baseline.  This is the form of
+the model reported by Austin and used for prediction.  
+Austin treats
+the first parameterization as a computational convenience to make
+estimation more efficient.  The `coef` function takes a `form`
+parameter if you need to see the other parameterisation.
+
+We start by loading the package
+```{r}
+library('austin')
+```
+and generating an (unrealistically small) set of test data 
+according to the assumptions above
+```{r}
+dd <- sim.wordfish(docs=10, vocab=12)
+```
+The resulting object is of class `sim.wordfish` and contains
+the generating parameters (in the form of the first model).  The two elements
+of interest are the vector of document positions
+```{r}
+dd$theta
+```
+and the generated data Y
+```{r}
+as.worddoc(dd$Y)
+```
+where Y is an object of class `wfm`.
+
+To scale this data we use the wordfish function
+```{r}
+wf <- wordfish(dd$Y)
+```
+The model is by default globally identified by requiring that
+`theta[10] > theta[1]`.  This will
+be true for all simulated data (with more than 10 documents).  For real
+data more suitable values may be set using the `dir` argument.
+
+Estimated document positions can be summarized using
+```{r}
+summary(wf)
+```
+To examine the word-specific parameters use
+```{r}
+coef(wf)
+```
+Estimated document positions and 95% confidence intervals can also be
+graphed (For more than a few tens of words the confidence
+  intervals will probably be 'implausibly' small.  They are
+  nevertheless asymptotically correct given the model assumptions. It
+  is those assumptions you might doubt.).  Any unnamed second argument
+to the plot function is taken as a vector of true document positions.
+These are then plotted over the original plot, as shown in Figure~\ref{fig1}.
+
+```{r,echo=FALSE,fig=TRUE,fig.width = 5,fig.height = 5}
+plot(wf, dd$theta)
+```
+
+Positions for new documents can also be estimated.  Here we generate
+predictions and confidence intervals for existing documents D4 and D5
+in the original data set
+```{r}
+predict(wf, newdata=getdocs(dd$Y, c(4,5)), se.fit=TRUE, interval='conf')
+```
+
+# Scaling with Wordscores
+
+Wordscores (Laver et al. 2003) is a method for scaling texts closely
+related to both correspondence analysis by implementing an incomplete
+reciprocal averaging algorithm, and to quadratic ordination as an
+approximation to an unfolding model (Lowe 2008, 2014).
+
+Austin refers to the algorithm described in Laver et al. 2003 as
+`classic' Wordscores to distinguish it from versions closer to
+correspondence analysis.  A classic Wordscores analysis has several
+distinguishing features.
+
+## Classic Wordscores
+
+Classic Wordscores estimates scores for words ('wordscores`) using
+only word frequency information from documents with known positions
+('reference' documents).  There is therefore no iterative estimation
+process since document positions are observed.  Documents with unknown
+positions ('virgin' documents) are treated as out of sample.
+
+Positions for out of sample documents are estimated by averaging the scores of
+the words they contain and re-scaling in an ad-hoc fashion that has
+generated some discussion and various alternatives.  The method also offers
+standard errors for the out of sample documents (These are
+  probably incorrect -- partly because the probability model from they
+  would have to be derived is unclear and partly because they can be 
+  quite implausible in some applications).
+
+To replicate the example analysis in Laver et al. we begin loading
+the test data
+```{r}
+data(lbg)
+```
+So we take a look at the word counts we've got to work with
+```{r}
+as.docword(lbg)
+```
+and then fit a classic Wordscores model to them.  Assume we know the
+positions of document R1 through R5 and wish to scale V1.  
+
+We first separate the reference documents from the virgin document:
+```{r}
+ref <- getdocs(lbg, 1:5)
+vir <- getdocs(lbg, 'V1') 
+```
+then fit the model using the reference documents
+```{r}
+ws <- classic.wordscores(ref, scores=seq(-1.5, 1.5, by=0.75))
+```
+We can summarise the results
+```{r}
+summary(ws)
+```
+The summary presents details about the reference documents.  If we want to see the 
+wordscores that were generated we look for the model's coefficients
+```{r}
+coef(ws)
+```
+which can also be plotted.
+
+We can now get a position for the virgin document
+```{r}
+predict(ws, newdata=vir)
+```
+When more than one document is to be predicted, an ad-hoc procedure 
+is applied by default to the predicted positions to rescale them to the same
+variance as the reference scores.  This may or may not be what you want.
+
+## Correspondence Analysis
+
+Wordscores approximates correspondence analysis, which is defined for
+more than one dimension.  To explore this approach to document scaling
+you may find the `ca` or `anacor` packages useful.  A rather limited subset of correspondence analysis is implemented by the MASS package's `corresp` function.  
+
+# References
+
+Laver, Michael, and John Garry. 2000. “Estimating Policy Positions from Political Texts.” American Journal of Political Science 44(3): 619–34.
+
+Lowe, Will. 2008. “Understanding Wordscores.” Political Analysis 16(4): 356–71.
+
+Lowe, Will. 2013. “There’s (basically) Only One Way to Do It.” Paper presented at APSA 2013, Chicago IL. Available at [SSRN](http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2318543).
+
+Monroe, Burt L., and Ko Maeda. 2004. “Talk’s Cheap: Text-Based Estimation of Rhetorical Ideal-Points.”
+
+Moustaki, Irini, and Martin Knott. 2000. “Generalized Latent Trait Models.” Psychometrika 65(3): 391–411.
+
+Slapin, Jonathan B., and Sven-Oliver Proksch. 2008. “A Scaling Model for Estimating Time-Series Party Positions from Texts.” American Journal of Political Science 52(3): 705–22.
+
