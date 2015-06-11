@@ -8,7 +8,7 @@ citEntry(entry="Manual",
          url    = "http://www.github.org/conjugateprior/austin",
          textVersion = 
          paste("Will Lowe 2011.", 
-               "Austin: Do things with words. Version 0.2.1",
+               "Austin: Do things with words. Version 0.2.2",
                "URL http://github.org/conjugateprior/austin")
          )
 

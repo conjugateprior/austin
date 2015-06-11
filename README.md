@@ -2,8 +2,7 @@
 
 This is a cosmetic update of the [R-forge package](https://r-forge.r-project.org/projects/austin/) `austin` version 0.2. 
 
-Notionally this is 0.2.1 but that's only to distinguish it
-from the original.  Development on 0.2 is now stopped 
+Notionally this is 0.2.2. Development on 0.2 is now stopped 
 and further development will happen here.
 
 ### Installation
@@ -19,7 +18,7 @@ devtools::install_github("conjugateprior/austin")
 That's it.
 
 
-*Will Lowe, March 2015*
+*Will Lowe, April 2015*
 
 
 
