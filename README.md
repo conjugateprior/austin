@@ -4,7 +4,7 @@ This is a cosmetic update of the [R-forge package](https://r-forge.r-project.org
 
 Notionally this is 0.2.2. Development on 0.2 is now stopped 
 and further development will happen here.
-
+ 
 ### Installation
 
 First ensure you have `devtools` installed.  If you don't 
