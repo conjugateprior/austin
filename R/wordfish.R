@@ -12,14 +12,15 @@
 #' from the current and the previous iterations is less  
 #' than \code{tol}. \code{sigma} is the standard deviation for the beta 
 #' prior in poisson form. \code{startparams} is a list of starting values
-#' (\code{theta}, \code{beta}, \code{psi} and \code{alpha}).  A previously 
-#' fitted Wordfish model is sufficient.
+#' (\code{theta}, \code{beta}, \code{psi} and \code{alpha}) or a 
+#' previously fitted Wordfish model for the same data.
 #' \code{verbose} generates a running commentary during estimation
 #' 
 #' The model has two equivalent forms: a poisson model with two sets of
 #' document and two sets of word parameters, and a multinomial with two sets of
 #' word parameters and document ideal points.  The first form is used for
-#' estimation, the second for summarizing and prediction.
+#' estimation, the second is available for alternative summaries, prediction, 
+#' and profile standard error calculations.
 #' 
 #' The model is regularized by assuming a prior on beta with mean zero and
 #' standard deviation sigma (in poisson form).  If you don't want to
@@ -154,22 +155,31 @@ wordfish <- function(wfm,
   
   if (!is.null(control$startparams)) {
     inc <- control$startparams
-    pars <- coef(inc, form='poisson')
-    ## fill in known word parameters if they're available
-    inter <- intersect(good.words, rownames(pars$words)) 
-    
-    med.beta <- median(pars$words$beta)
-    med.psi <- median(pars$words$psi)
-    newpars <- matrix(rep(c(med.beta, med.psi), each=length(good.words)), 
-                      ncol=2, dimnames=list(good.words, c('beta', 'psi')))  
-    
-    newpars[inter,'beta'] <- pars$words[inter,'beta']
-    newpars[inter,'psi'] <- pars$words[inter,'psi']
-    
-    params <- list(beta=newpars[,'beta'],
-                   psi=newpars[,'psi'],
-                   alpha=pars$docs$alpha,
-                   theta=inc$theta)
+    if (is(inc, 'wordfish')){
+      pars <- coef(inc, form='poisson')
+      ## fill in known word parameters if they're available
+      inter <- intersect(good.words, rownames(pars$words)) 
+      med.beta <- median(pars$words$beta)
+      med.psi <- median(pars$words$psi)
+      newpars <- matrix(rep(c(med.beta, med.psi), each=length(good.words)), 
+                        ncol=2, dimnames=list(good.words, c('beta', 'psi')))
+      newpars[inter,'beta'] <- pars$words[inter,'beta']
+      newpars[inter,'psi'] <- pars$words[inter,'psi']
+      params <- list(beta=newpars[,'beta'],
+                     psi=newpars[,'psi'],
+                     alpha=pars$docs$alpha,
+                     theta=inc$theta)
+    } else {
+      ## a plain old list came in
+      params <- list(beta=inc$beta,
+                     psi=inc$psi,
+                     alpha=inc$alpha,
+                     theta=inc$theta)
+      stopifnot((length(params$beta) == ncol(tY)) &&
+                (length(params$psi) == ncol(tY)) &&
+                (length(params$alpha) == nrow(tY)) && 
+                (length(params$theta) == nrow(tY))) 
+    }
   } else {
     params <- initialize.urfish(tY)
   }
