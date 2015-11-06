@@ -174,9 +174,11 @@ wordfish <- function(wfm,
     params <- initialize.urfish(tY)
   }
   
-  ll <- LL(params, tY)
-  if (verbose)
-    cat("0:\tLL:", ll, "\n")
+  
+  if (conv.check=='ll'){
+    ll <- LL(params, tY)
+    if (verbose) cat("0\tLL:", ll, "\n")
+  }
   
   iter <- 1
   diff <- Inf ## the quantity we're checking is less than tol
@@ -260,6 +262,11 @@ wordfish <- function(wfm,
     }
     
     iter <- iter + 1
+  }
+  
+  if (verbose){
+    ll <- LL(params, tY)
+    cat("Final LL:", ll, "\n")
   }
   
   model <- list(dir=dir,
