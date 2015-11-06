@@ -4,14 +4,15 @@
 \alias{wordfish}
 \title{Estimate a Wordfish Model}
 \usage{
-wordfish(wfm, dir = c(1, 10), control = list(tol = 1e-06, sigma = 3,
-  startparams = NULL), verbose = FALSE, conv.check = c("ll", "cor"))
+wordfish(wfm, dir = c(1, length(docs(wfm))), control = list(tol = 1e-06,
+  sigma = 3, startparams = NULL, conv.check = c("ll", "cor")),
+  verbose = FALSE)
 }
 \arguments{
 \item{wfm}{a word frequency matrix}
 
 \item{dir}{set global identification by forcing \code{theta[dir[1]]} <
-\code{theta[dir[2]]}}
+\code{theta[dir[2]]} (defaults to first and last document)}
 
 \item{control}{list of estimation options}
 
@@ -20,14 +21,19 @@ wordfish(wfm, dir = c(1, 10), control = list(tol = 1e-06, sigma = 3,
 \value{
 An object of class wordfish.  This is a list containing:
 
-\item{dir}{global identification of the dimension} \item{theta}{document
-positions} \item{alpha}{document fixed effects} \item{beta}{word slope
-parameters} \item{psi}{word fixed effects} \item{docs}{names of the
-documents} \item{words}{names of words} \item{sigma}{regularization
-parameter for betas in poisson form}.
-
-\item{ll}{final log likelihood} \item{se.theta}{standard errors for document
-position} \item{data}{the original data}
+\item{dir}{global identification of the dimension} 
+\item{theta}{document
+positions} 
+\item{alpha}{document fixed effects} 
+\item{beta}{word slope
+parameters} 
+\item{psi}{word fixed effects} 
+\item{docs}{names of the documents} 
+\item{words}{names of words} 
+\item{sigma}{regularization parameter for betas in poisson form}
+\item{ll}{final log likelihood} 
+\item{se.theta}{standard errors for document position} 
+\item{data}{the original data}
 }
 \description{
 Estimates a Wordfish model using Conditional Maximum Likelihood.
@@ -43,7 +49,7 @@ which stops when one minus the correlation between the \code{theta}s
 from the current and the previous iterations is less  
 than \code{tol}. \code{sigma} is the standard deviation for the beta 
 prior in poisson form. \code{startparams} is a list of starting values
-(\code{theta}, \code{beta}, \code{psi} and \code{alpha}.  A previously 
+(\code{theta}, \code{beta}, \code{psi} and \code{alpha}).  A previously 
 fitted Wordfish model is sufficient.
 \code{verbose} generates a running commentary during estimation
 

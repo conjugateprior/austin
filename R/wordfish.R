@@ -64,8 +64,9 @@
 wordfish <- function(wfm,
                      dir=c(1, length(docs(wfm))),
                      control=list(tol=1e-06, sigma=3,
-                                  startparams=NULL), verbose=FALSE,
-                     conv.check=c('ll', 'cor')){
+                                  startparams=NULL,
+                                  conv.check=c('ll', 'cor')), 
+                     verbose=FALSE){
   thecall <- match.call()
   dir <- dir
   
