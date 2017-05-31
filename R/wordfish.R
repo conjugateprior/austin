@@ -258,7 +258,7 @@ wordfish <- function(wfm,
     
     ll <- LL(params, tY)
     if (conv.check=='ll'){
-      diff <- (ll - old.ll)/ll
+      diff <- (ll - old.ll)/abs(old.ll)
       if (verbose) {
         cat("LL:", ll, "\n")
         flush.console()
