@@ -105,18 +105,18 @@ Austin treats the first parameterization as a computational convenience to make 
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/as.worddoc.html">as.worddoc</a></span>(dd$Y)
 ##      docs
 ## words D01 D02 D03 D04 D05 D06 D07 D08 D09 D10
-##   W01  29  41  32  25  19  18  18  10   9   8
-##   W02  39  32  22  36  26  21  19  14  10   8
-##   W03  36  29  35  24  22  21  12  12  14  15
-##   W04  13  12  12  20  24  27  25  30  27  38
-##   W05   3  14  13  19  17  31  24  31  32  37
-##   W06   9   7  16  12  33  31  23  30  32  34
-##   W07 107  93  66  78  69  59  46  40  34  17
-##   W08  88 107  86  68  60  59  46  43  31  24
-##   W09 102  78 106  77  75  55  45  39  30  21
-##   W10  23  29  44  34  49  54  77  84  96 102
-##   W11  27  28  32  58  52  65  86  78  94  91
-##   W12  24  30  36  49  54  59  79  89  91 105</code></pre></div>
+##   W01  32  39  27  23  12  25  17  15  16   6
+##   W02  36  44  27  32  28  16  12  14  12   6
+##   W03  41  32  37  38  16  22  11  13   5   7
+##   W04   3  16  14  11  17  33  21  35  35  39
+##   W05   6  10  16  17  24  25  22  28  34  34
+##   W06   6  14  14  13  21  28  31  33  46  31
+##   W07  88  92  71  86  80  59  49  35  37  20
+##   W08  97  86  93  69  75  54  50  37  26  30
+##   W09 126  82  95  67  73  56  40  39  28  21
+##   W10  24  27  37  48  52  60  60  87  96  95
+##   W11  16  28  25  35  53  63  86  76  72  96
+##   W12  25  30  44  61  49  59 101  88  93 115</code></pre></div>
 <p>where Y is an object of class <code>wfm</code>.</p>
 <p>To scale this data we use the wordfish function</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">wf &lt;-<span class="st"> </span><span class="kw"><a href="../reference/wordfish.html">wordfish</a></span>(dd$Y)</code></pre></div>
@@ -127,46 +127,46 @@ Austin treats the first parameterization as a computational convenience to make 
 ##  wordfish(wfm = dd$Y)
 ## 
 ## Document Positions:
-##     Estimate Std. Error   Lower     Upper
-## D01  -1.4447    0.11593 -1.6719 -1.217445
-## D02  -1.1871    0.10812 -1.3990 -0.975190
-## D03  -0.8350    0.10012 -1.0312 -0.638789
-## D04  -0.4925    0.09510 -0.6789 -0.306157
-## D05  -0.1794    0.09277 -0.3612  0.002472
-## D06   0.1385    0.09257 -0.0429  0.319975
-## D07   0.5428    0.09546  0.3557  0.729853
-## D08   0.8054    0.09927  0.6109  1.000005
-## D09   1.1144    0.10578  0.9071  1.321755
-## D10   1.5352    0.11841  1.3031  1.767277</code></pre></div>
+##     Estimate Std. Error    Lower    Upper
+## D01  -1.5949    0.11593 -1.82216 -1.36773
+## D02  -1.0186    0.09805 -1.21075 -0.82638
+## D03  -0.8142    0.09375 -0.99795 -0.63047
+## D04  -0.5079    0.08916 -0.68268 -0.33318
+## D05  -0.2373    0.08691 -0.40761 -0.06692
+## D06   0.1672    0.08665 -0.00262  0.33702
+## D07   0.6025    0.09052  0.42507  0.77989
+## D08   0.8088    0.09391  0.62474  0.99286
+## D09   1.1016    0.10053  0.90460  1.29865
+## D10   1.4900    0.11280  1.26890  1.71108</code></pre></div>
 <p>To examine the word-specific parameters use</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef</span>(wf)
 ## $words
 ##           beta      psi
-## W01 -0.4325639 2.952542
-## W02 -0.3660200 3.062194
-## W03 -0.3010432 3.054098
-## W04  0.5009519 3.097714
-## W05  0.6182690 3.023840
-## W06  0.5568003 3.074318
-## W07 -0.3829271 4.042532
-## W08 -0.3574953 4.057268
-## W09 -0.3866254 4.071772
-## W10  0.6369517 4.001417
-## W11  0.5668242 4.060799
-## W12  0.6162860 4.049733
+## W01 -0.2926532 3.012516
+## W02 -0.4355365 3.023468
+## W03 -0.5173627 2.961505
+## W04  0.7193090 3.010726
+## W05  0.6143679 3.017655
+## W06  0.6789908 3.084710
+## W07 -0.2935112 4.080791
+## W08 -0.3190879 4.071433
+## W09 -0.4340449 4.040084
+## W10  0.6410030 4.005461
+## W11  0.7026040 3.916418
+## W12  0.6501193 4.128306
 ## 
 ## $docs
 ##           alpha
 ## D01  0.00000000
-## D02  0.03366527
-## D03  0.07275891
-## D04  0.08714131
-## D05  0.07764435
-## D06  0.04491408
-## D07 -0.03061246
-## D08 -0.09907031
-## D09 -0.19738845
-## D10 -0.35819687
+## D02  0.08507485
+## D03  0.10274448
+## D04  0.11128283
+## D05  0.09911016
+## D06  0.04505844
+## D07 -0.06145480
+## D08 -0.12842629
+## D09 -0.23982448
+## D10 -0.41327191
 ## 
 ## attr(,"class")
 ## [1] "coef.wordfish" "list"</code></pre></div>
@@ -174,9 +174,9 @@ Austin treats the first parameterization as a computational convenience to make 
 <p><img src="austin_files/figure-html/unnamed-chunk-10-1.png" width="480"></p>
 <p>Positions for new documents can also be estimated. Here we generate predictions and confidence intervals for existing documents D4 and D5 in the original data set</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">predict</span>(wf, <span class="dt">newdata=</span><span class="kw"><a href="../reference/getdocs.html">getdocs</a></span>(dd$Y, <span class="kw">c</span>(<span class="dv">4</span>,<span class="dv">5</span>)), <span class="dt">se.fit=</span><span class="ot">TRUE</span>, <span class="dt">interval=</span><span class="st">'conf'</span>)
-##            fit     se.fit        lwr          upr
-## D04 -0.4925401 0.09509501 -0.6789229 -0.306157285
-## D05 -0.1793541 0.09277003 -0.3611800  0.002471864</code></pre></div>
+##            fit     se.fit        lwr         upr
+## D04 -0.5079313 0.08916016 -0.6826820 -0.33318057
+## D05 -0.2372642 0.08691248 -0.4076095 -0.06691883</code></pre></div>
 </div>
 <div id="scaling-with-wordscores" class="section level1">
 <h1 class="hasAnchor">

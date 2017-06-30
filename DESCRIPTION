@@ -7,8 +7,8 @@ Authors@R: person("Will", "Lowe", email = "wlowe@princeton.edu", role = c("aut",
 Description: Doing things with words currently means scaling documents on
     a presumed underlying dimension on the basis of word frequencies and heroic
     assumptions about language generation.
-URL: http://conjugateprior.github.io/austin
-BugReports: http://github.com/conjugateprior/austin/issues
+URL: https://conjugateprior.github.io/austin
+BugReports: https://github.com/conjugateprior/austin/issues
 Depends:
     R (>= 3.4)
 Imports:
