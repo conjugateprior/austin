@@ -8,6 +8,7 @@
 #' @param pattern.type marks whether the patterns are 'globs' or full regular
 #' expressions
 #' @return A list of matching words.
+#' @importFrom utils read.table glob2rx
 #' @export
 #' @author Will Lowe
 extractwords <- function(words,

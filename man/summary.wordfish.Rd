@@ -24,10 +24,9 @@ Summarises estimated document positions from a fitted Wordfish model
 if `level' is passed to the function, e.g. 0.95 for 95 percent confidence,
 this generates the appropriate width intervals.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wordfish}}
 }
-
+\author{
+Will Lowe
+}

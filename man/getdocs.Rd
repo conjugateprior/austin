@@ -22,12 +22,11 @@ Gets particular documents from a wfm by name or index
 getdocs is essentially a subset command that picks the correct margin for
 you.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{as.wfm}}, \code{\link{as.docword}},
 \code{\link{as.worddoc}}, \code{\link{docs}}, \code{\link{words}},
 \code{\link{is.wfm}}, \code{\link{wordmargin}}
 }
-
+\author{
+Will Lowe
+}

@@ -27,10 +27,9 @@ indexes and feature value pairs divided by colons.  Indexes refer to the
 words with non-zero counts in the original matrix, and the feature values
 are the counts.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

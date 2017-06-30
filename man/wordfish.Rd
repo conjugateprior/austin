@@ -49,14 +49,15 @@ which stops when one minus the correlation between the \code{theta}s
 from the current and the previous iterations is less  
 than \code{tol}. \code{sigma} is the standard deviation for the beta 
 prior in poisson form. \code{startparams} is a list of starting values
-(\code{theta}, \code{beta}, \code{psi} and \code{alpha}).  A previously 
-fitted Wordfish model is sufficient.
+(\code{theta}, \code{beta}, \code{psi} and \code{alpha}) or a 
+previously fitted Wordfish model for the same data.
 \code{verbose} generates a running commentary during estimation
 
 The model has two equivalent forms: a poisson model with two sets of
 document and two sets of word parameters, and a multinomial with two sets of
 word parameters and document ideal points.  The first form is used for
-estimation, the second for summarizing and prediction.
+estimation, the second is available for alternative summaries, prediction, 
+and profile standard error calculations.
 
 The model is regularized by assuming a prior on beta with mean zero and
 standard deviation sigma (in poisson form).  If you don't want to
@@ -69,9 +70,6 @@ wf <- wordfish(dd$Y)
 summary(wf)
 
 }
-\author{
-Will Lowe
-}
 \references{
 Slapin and Proksch (2008) 'A Scaling Model for Estimating
 Time-Series Party Positions from Texts.' American Journal of Political
@@ -82,4 +80,6 @@ Science 52(3):705-772.
 \code{\link{coef.wordfish}}, \code{\link{fitted.wordfish}},
 \code{\link{predict.wordfish}}, \code{\link{sim.wordfish}}
 }
-
+\author{
+Will Lowe
+}

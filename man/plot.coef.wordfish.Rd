@@ -21,10 +21,9 @@ A plot of sorted beta and optionally psi parameters.
 \description{
 Plots sorted beta and optionally also psi parameters from a Wordfish model
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wordfish}}
 }
-
+\author{
+Will Lowe
+}

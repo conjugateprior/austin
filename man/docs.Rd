@@ -20,10 +20,9 @@ A list of document names.
 \description{
 Extracts the document names from a wfm object.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

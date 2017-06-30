@@ -20,4 +20,3 @@ Extracts the estimated word rates from a fitted Wordfish model
 \author{
 Will Lowe
 }
-

@@ -19,4 +19,3 @@ H. Kluever (2009) 'Measuring influence group influence using
 quantitative text analysis' European Union Politics 11:1.
 }
 \keyword{datasets}
-

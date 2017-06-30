@@ -46,6 +46,8 @@
 #' m <- wfm(mat, word.margin=1)
 #' getdocs(as.docword(m), 'D2')
 #' 
+#' @importFrom methods is
+#' @importFrom utils read.csv
 #' @export
 wfm <- function(mat, word.margin=1){
     if (is(mat, 'character')){
@@ -123,6 +125,7 @@ wordmargin <- function(x){
 #' @return an object of class wfm
 #' @author Will Lowe
 #' @seealso \code{\link{wfm}}
+#' @importFrom methods is
 #' @export
 as.wfm <- function(mat, word.margin=1){
     ## rather speculative conversion from tm format here

@@ -20,4 +20,3 @@ estimating time-series party positions from texts' American Journal of
 Political Science 52(3), 705-722.
 }
 \keyword{datasets}
-

@@ -24,4 +24,3 @@ To see the wordscores, use \code{coef}.
 \author{
 Will Lowe
 }
-

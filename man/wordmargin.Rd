@@ -19,10 +19,9 @@ words
 \details{
 Changing the wordmargin by assignment just swaps the dimnames
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

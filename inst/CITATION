@@ -4,11 +4,11 @@ citHeader("To cite austin in publications use:")
 citEntry(entry="Manual",
          title = "Austin: Do things with words",
          author = "Will Lowe",
-         year   = 2011,
-         url    = "http://www.github.org/conjugateprior/austin",
+         year   = 2017,
+         url    = "http://conjugateprior.github.io/austin",
          textVersion = 
-         paste("Will Lowe 2011.", 
-               "Austin: Do things with words. Version 0.2.2",
-               "URL http://github.org/conjugateprior/austin")
+         paste("Will Lowe 2015.", 
+               "Austin: Do things with words. Version 0.3.0",
+               "URL http://conjugateprior.github.io/austin")
          )
 

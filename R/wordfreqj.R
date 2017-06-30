@@ -12,6 +12,7 @@
 #' @param verbose show the command line used to run the java archive
 #' @return An object of class wfm.
 #' @author Will Lowe
+#' @importFrom utils read.delim
 #' @export wordfreqj
 wordfreqj <- function(filenames,
                       includenums=FALSE,
@@ -32,10 +33,9 @@ wordfreqj <- function(filenames,
     }
     options.string <- paste(options.string, "-e", encoding)
 
-    index <- which(grepl('austin', searchpaths()))[1]
-    fullpath <- paste(searchpaths()[index], '/exec/wordfreq.jar', sep='')
+    fullpath <- system.file("java", "wordfreq.jar", package = "austin")
     if (verbose)
-        cat("looking at", fullpath, "for the java archive\n")
+        cat("Looking at", fullpath, "for the java archive (jar)\n")
 
     cat("Running...")
     tmpfile <- tempfile('jfreq-')

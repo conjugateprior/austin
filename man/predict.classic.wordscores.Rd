@@ -31,10 +31,9 @@ This is the method described in Laver et al. 2003, including rescaling for
 more than one virgin text.  Confidence intervals are not provided if
 \code{rescale} is 'none'.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{classic.wordscores}}
 }
-
+\author{
+Will Lowe
+}

@@ -30,10 +30,9 @@ coefficients are labeled by the words the correspond to.
 Note that in both forms there will be beta and psi parameters, so make sure
 they are the ones you want.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wordfish}}
 }
-
+\author{
+Will Lowe
+}

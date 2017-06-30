@@ -30,4 +30,3 @@ The standard deviations for each resampled document position are returned.
 \author{
 Will Lowe
 }
-

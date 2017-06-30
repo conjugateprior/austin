@@ -15,4 +15,3 @@ This is a word frequency nmatrix.  Loading this data also makes available
 \code{iebudget2009cov} which contains covariates for the speakers.
 }
 \keyword{datasets}
-

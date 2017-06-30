@@ -17,10 +17,9 @@ an object of class wfm
 \description{
 Constructs a wfm object from various other kinds of objects
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

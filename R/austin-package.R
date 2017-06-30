@@ -1,4 +1,28 @@
-
+#' austin: Do things with words
+#' 
+#' Austin helps you see what people, usually politicians, do with words.
+#' Currently that means how positions on a presumed underlying
+#' policy scale are taken by manipulating word occurrence counts.  
+#' The models implemented here try to
+#' try to recover those positions using only this information, plus
+#' some heroic assumptions about language generation, e.g.
+#' unidimensionality, conditional independence of words given ideal point
+#' and Poisson-distributed word counts.
+#' 
+#' The package currently implements Wordfish (Slapin and Proksch, 2008) and 
+#' Wordscores (Laver, Benoit and Garry, 2003).  See references for details.
+#' 
+#' @references 
+#'   J. Slapin and S.-O. Proksch (2008) 'A scaling model for
+#'   estimating time-series party positions from texts' American Journal of
+#'   Political Science 52(3), 705-722.
+#'   
+#'   Laver, Benoit and Garry (2003) `Estimating policy positions from
+#'   political text using words as data' American Political Science Review 97(2).
+#'   
+#' @docType package
+#' @name austin
+NULL
 
 #' The Irish No-Confidence debate
 #' 
@@ -6,7 +30,7 @@
 #' 
 #' This are word counts from the no-confidence debate in Ireland.
 #' 
-#' daildata is a word frequency object.
+#' \code{daildata} is a word frequency object.
 #' 
 #' @name daildata
 #' @docType data

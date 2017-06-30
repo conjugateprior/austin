@@ -36,9 +36,6 @@ vir <- getdocs(lbg, 'V1')
 predict(ws, newdata=vir)
 
 }
-\author{
-Will Lowe
-}
 \references{
 Laver, M. and Benoit, K. and Garry, J. (2003) 'Extracting policy
 positions from political texts using words as data' American Political
@@ -47,4 +44,6 @@ Science Review. 97. pp.311-333
 \seealso{
 \code{\link{summary.classic.wordscores}}
 }
-
+\author{
+Will Lowe
+}

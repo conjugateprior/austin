@@ -18,4 +18,3 @@ Laver, Benoit and Garry (2003) `Estimating policy positions from
 political text using words as data' American Political Science Review 97(2).
 }
 \keyword{datasets}
-

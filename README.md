@@ -1,21 +1,18 @@
+# Austin
 
-### Installation
+[![Build Status](https://travis-ci.org/conjugateprior/austin.svg?branch=master)](https://travis-ci.org/conjugateprior/austin)
 
-First ensure you have `devtools` installed.  If you don't 
-```
-install.packages('devtools')
-```
-then
+Austin fits Wordscores and Wordfish models to document-feature matrices.
+
+## Installation
+
 ```
 devtools::install_github("conjugateprior/austin")
 ```
-That's it.
+If that didn't work you may need to 
+```
+install.packages('devtools')
+```
+first, then try again.
 
 
-*Will Lowe, April 2015*
-
-
-
-"Does she go?"  
-
-[![Build Status](https://travis-ci.org/conjugateprior/austin.svg?branch=v0.2.2)](https://travis-ci.org/conjugateprior/austin)

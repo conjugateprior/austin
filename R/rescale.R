@@ -12,6 +12,7 @@
 #' @return A data frame containing the rescaled document positions with
 #' standard errors if available.
 #' @author Will Lowe
+#' @importFrom stats coef lm
 #' @export 
 rescale <- function(object, ident=c(1,-1,10,1)){
     val1 <- object$theta[ident[1]]

@@ -24,10 +24,9 @@ after \code{min.doc} and \code{min.doc} filters have been applied.
 \description{
 Ejects low frequency observations and subsamples
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

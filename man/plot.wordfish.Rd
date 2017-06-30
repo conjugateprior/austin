@@ -24,10 +24,9 @@ intervals and true document positions, if these are available.
 \description{
 Plots a fitted Wordfish model with confidence intervals
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wordfish}}
 }
-
+\author{
+Will Lowe
+}

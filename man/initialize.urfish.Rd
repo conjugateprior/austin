@@ -28,11 +28,10 @@ These are subtracted from a the data matrix, which is logged and decomposed
 by SVD.  Word slope (beta) and document position (theta) are estimated by
 rescaling SVD output.
 }
-\author{
-Will Lowe
-}
 \references{
 This is substantially the method used by Slapin and Proksch's
 original code.
 }
-
+\author{
+Will Lowe
+}

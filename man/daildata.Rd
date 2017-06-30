@@ -10,10 +10,9 @@ Irish No-Confidence Debate
 \details{
 This are word counts from the no-confidence debate in Ireland.
 
-daildata is a word frequency object.
+\code{daildata} is a word frequency object.
 }
 \references{
 Benoit and Laver's Irish Political Studies piece. (fixme!)
 }
 \keyword{datasets}
-

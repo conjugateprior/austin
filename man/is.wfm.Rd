@@ -15,10 +15,9 @@ Whether the object can be used as a Word Frequency Matrix
 \description{
 Checks whether an object is a Word Frequency Matrix
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

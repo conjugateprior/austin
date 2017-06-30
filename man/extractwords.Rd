@@ -23,4 +23,3 @@ Extract a list of matching words from another list of words
 \author{
 Will Lowe
 }
-

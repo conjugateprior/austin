@@ -20,10 +20,9 @@ A list of words.
 \description{
 Extracts the words from a wfm object
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}, \code{\link{docs}}
 }
-
+\author{
+Will Lowe
+}

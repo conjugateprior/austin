@@ -28,10 +28,9 @@ Transforms a wfm to the format used by the lda package
 See the documentation of \code{lda} package for the relevant object
 structures and file formats.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

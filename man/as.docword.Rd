@@ -19,10 +19,9 @@ Extract a word count matrix with documents as rows and words as columns
 This is a helper function for wfm objects.  Use it instead of manipulating
 wfm object themselves.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{as.worddoc}}, \code{\link{wfm}}
 }
-
+\author{
+Will Lowe
+}

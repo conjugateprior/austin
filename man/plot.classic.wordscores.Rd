@@ -17,10 +17,9 @@ A plot of the wordscores in increasing order.
 \description{
 Plots Wordscores from a fitted Wordscores model
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{classic.wordscores}}
 }
-
+\author{
+Will Lowe
+}

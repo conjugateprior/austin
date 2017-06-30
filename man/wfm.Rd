@@ -56,12 +56,11 @@ m <- wfm(mat, word.margin=1)
 getdocs(as.docword(m), 'D2')
 
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{as.wfm}}, \code{\link{as.docword}},
 \code{\link{as.worddoc}}, \code{\link{docs}}, \code{\link{words}},
 \code{\link{is.wfm}}, \code{\link{wordmargin}}
 }
-
+\author{
+Will Lowe
+}

@@ -27,4 +27,3 @@ passed as the first argument is not affected.
 \author{
 Will Lowe
 }
-

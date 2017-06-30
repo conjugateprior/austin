@@ -43,4 +43,3 @@ This is most helpful when dist=normal.
 \author{
 Will Lowe
 }
-

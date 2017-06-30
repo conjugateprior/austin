@@ -61,6 +61,9 @@
 #' wf <- wordfish(dd$Y)
 #' summary(wf)
 #' 
+#' @importFrom methods is
+#' @importFrom stats dmultinom cor median optim optimize
+#' @importFrom utils flush.console
 #' @export
 wordfish <- function(wfm,
                      dir=c(1, length(docs(wfm))),
@@ -156,7 +159,7 @@ wordfish <- function(wfm,
   if (!is.null(control$startparams)) {
     inc <- control$startparams
     if (is(inc, 'wordfish')){
-      pars <- coef(inc, form='poisson')
+      pars <- coef.wordfish(inc, form='poisson')
       ## fill in known word parameters if they're available
       inter <- intersect(good.words, rownames(pars$words)) 
       med.beta <- median(pars$words$beta)
@@ -321,7 +324,7 @@ print.wordfish <- function(x,
   cat("Call:\n\t")
   print(x$call)
   cat("\nDocument Positions:\n")
-  pp <- predict(x, se.fit=TRUE, interval='confidence')
+  pp <- predict.wordfish(x, se.fit=TRUE, interval='confidence')
   colnames(pp) <- c("Estimate", "Std. Error", "Lower", "Upper")
   print(pp, digits=digits)
 }
@@ -389,6 +392,8 @@ print.coef.wordfish <- function(x,
 #' @return A plot of sorted beta and optionally psi parameters.
 #' @author Will Lowe
 #' @seealso \code{\link{wordfish}}
+#' @importFrom methods is
+#' @importFrom graphics dotchart text plot
 #' @export
 #' @method plot coef.wordfish
 plot.coef.wordfish <- function(x, pch=20, psi=TRUE, ...){
@@ -437,7 +442,7 @@ plot.coef.wordfish <- function(x, pch=20, psi=TRUE, ...){
 #' @method summary wordfish
 summary.wordfish <- function(object, level=0.95, ...){
   m <- object
-  pp <- predict(m, se.fit=TRUE, interval='confidence')
+  pp <- predict.wordfish(m, se.fit=TRUE, interval='confidence')
   colnames(pp) <- c("Estimate", "Std. Error", "Lower", "Upper")
   rownames(pp) <- m$docs
   ret <- list(model=m, scores=pp)
@@ -479,6 +484,7 @@ print.summary.wordfish <- function(x,
 #' @importFrom numDeriv hessian
 #' @seealso \code{\link{wordfish}}
 #' @export
+#' @importFrom stats dmultinom optimize qnorm
 #' @method predict wordfish
 predict.wordfish <- function(object,
                              newdata=NULL,
@@ -552,6 +558,10 @@ predict.wordfish <- function(object,
 #' intervals and true document positions, if these are available.
 #' @author Will Lowe
 #' @export
+#' @importFrom methods is
+#' @importFrom stats cor
+#' @importFrom graphics dotchart segments points text title
+#' @importFrom grDevices rgb
 #' @seealso \code{\link{wordfish}}
 #' @method plot wordfish
 plot.wordfish <- function(x,
@@ -563,7 +573,8 @@ plot.wordfish <- function(x,
   if (!is(x, "wordfish"))
     stop("First argument must be a wordfish model")
   
-  vv       <- as.data.frame(predict(x, se.fit=TRUE, interval='conf', level=level))
+  vv       <- as.data.frame(predict.wordfish(x, se.fit=TRUE, 
+                                             interval='conf', level=level))
   ord      <- order(vv$fit)
   theta    <- vv$fit[ord]
   upper    <- vv$upr[ord]
@@ -623,6 +634,7 @@ plot.wordfish <- function(x,
 #' positions} \item{doclen}{The `document' lengths} \item{beta}{`Word'
 #' intercepts} \item{psi}{`Word' slopes}
 #' @author Will Lowe
+#' @importFrom stats rnorm rmultinom
 #' @export sim.wordfish
 sim.wordfish <- function(docs=10,
                          vocab=20,
@@ -785,6 +797,8 @@ initialize.urfish <- function(tY){
 #' @param ... Unused
 #' @return Standard errors for document positions
 #' @author Will Lowe
+#' @importFrom stats rpois sd
+#' @importFrom methods is
 #' @export bootstrap.se
 bootstrap.se <- function(object, L=50, verbose=FALSE, ...){
   if (is(object, 'wordfish')){

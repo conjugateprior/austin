@@ -17,10 +17,9 @@ The wordscores
 \description{
 Lists wordscores from a fitted Wordscores model.
 }
-\author{
-Will Lowe
-}
 \seealso{
 \code{\link{classic.wordscores}}
 }
-
+\author{
+Will Lowe
+}
