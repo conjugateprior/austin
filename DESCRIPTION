@@ -1,7 +1,7 @@
 Package: austin
 Type: Package
 Title: Do things with words
-Version: 0.4.0
+Version: 0.5.0
 Date: 2020-12-23
 Authors@R: person("Will", "Lowe", email = "lowe@hertie-school.org", role = c("aut", "cre"))
 Description: Doing things with words currently means scaling documents on
@@ -15,6 +15,9 @@ Imports:
     ggplot2,
     numDeriv,
     methods,
+    Matrix,
+    quanteda,
+    tokenizers
 License: GPL-2
 LazyLoad: yes
 Suggests:
