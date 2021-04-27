@@ -14,7 +14,7 @@ jl_filter(x, ..., .preserve = FALSE)
 \item{.preserve}{whether to keep groups (default: FALSE)}
 }
 \value{
-
+a tibble
 }
 \description{
 Filter out some documents using dplyr expressions, reindexing 

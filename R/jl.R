@@ -95,7 +95,7 @@ jl_identify <- function(x){
     warning("Removing existing 'doc_id'")
     x[["doc_id"]] <- NULL
   }
-  dplyr::add_column(x, doc_id = 1:nrow(x), .before = 1)
+  tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
 }
 
 
@@ -211,7 +211,7 @@ jl_reindex <- function(res){
 #' @param ... a dplyr expression specifying rows
 #' @param .preserve whether to keep groups (default: FALSE)
 #'
-#' @return
+#' @return a tibble
 #' @export
 jl_filter <- function(x, ..., .preserve = FALSE){
   res <- dplyr::filter(x, ..., .preserve = .preserve)
@@ -330,7 +330,7 @@ jl_promote_counts <- function(x, prefix = NULL){
   if (!is.null(prefix))
     colnames(dd) <- voc
   le <- min(which(names(x) %in% c("text", "tokens", "counts", "text")))
-  dplyr::add_column(x, dd, .before = le) # back with the non-derived non-text variables
+  tibble::add_column(x, dd, .before = le) # back with the non-derived non-text variables
 }
 
 #' Undo the effects of jl_promote_counts
