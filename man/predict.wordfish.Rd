@@ -4,8 +4,14 @@
 \alias{predict.wordfish}
 \title{Predict Method for Wordfish}
 \usage{
-\method{predict}{wordfish}(object, newdata = NULL, se.fit = FALSE,
-  interval = c("none", "confidence"), level = 0.95, ...)
+\method{predict}{wordfish}(
+  object,
+  newdata = NULL,
+  se.fit = FALSE,
+  interval = c("none", "confidence"),
+  level = 0.95,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted wordfish model}

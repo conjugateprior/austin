@@ -3,7 +3,6 @@
 \docType{package}
 \name{austin}
 \alias{austin}
-\alias{austin-package}
 \title{austin: Do things with words}
 \description{
 Austin helps you see what people, usually politicians, do with words.

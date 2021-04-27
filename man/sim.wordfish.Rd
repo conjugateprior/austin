@@ -4,8 +4,13 @@
 \alias{sim.wordfish}
 \title{Simulate data and parameters for a Wordfish model}
 \usage{
-sim.wordfish(docs = 10, vocab = 20, doclen = 500, dist = c("spaced",
-  "normal"), scaled = TRUE)
+sim.wordfish(
+  docs = 10,
+  vocab = 20,
+  doclen = 500,
+  dist = c("spaced", "normal"),
+  scaled = TRUE
+)
 }
 \arguments{
 \item{docs}{How many `documents' should be generated}

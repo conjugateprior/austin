@@ -14,8 +14,8 @@
 #' @export
 jl_tokenize_categories <- function(x, dictionary, ...){
   stopifnot("text" %in% names(x))
-  res <- tokens_lookup(tokens(x[["text"]], ...),
-                       dictionary = dictionary)
+  res <- quanteda::tokens_lookup(quanteda::tokens(x[["text"]], ...),
+                                 dictionary = dictionary)
   voc <- sort(unique(unname(unlist(res))))
   x[["tokens"]] <- lapply(res, function(x){ as.integer(factor(x, levels = voc)) })
   attr(x[["tokens"]], "types") <- voc
@@ -73,7 +73,7 @@ jl_process_topics <- function(x, ...,
   x[["counts"]] <- lapply(1:nrow(x), ff)
   attr(x[["counts"]], "types") <- voc
   if (drop_old_vars)
-    x <- select(x, -names(xx))
+    x <- dplyr::select(x, -names(xx))
   if (drop_unused_vars)
     x <- jl_reindex(x)
   x
@@ -95,7 +95,7 @@ jl_identify <- function(x){
     warning("Removing existing 'doc_id'")
     x[["doc_id"]] <- NULL
   }
-  add_column(x, doc_id = 1:nrow(x), .before = 1)
+  dplyr::add_column(x, doc_id = 1:nrow(x), .before = 1)
 }
 
 
@@ -122,10 +122,10 @@ jl_incorporate <- function(x, text_var = "text",
     txtvar <- x[[text_var]]
     if (remove_old_text_vars)
       x[[text_var]] <- NULL
-    tibble(x, text = txtvar)
+    dplyr::tibble(x, text = txtvar)
   } else {
     ti <- which(names(x) == "text")
-    tibble(x[,-ti], text = x[["text"]])
+    dplyr::tibble(x[,-ti], text = x[["text"]])
   }
 }
 
@@ -167,11 +167,11 @@ jl_split <- function(x, what = c("paragraphs", "sentences", "regex"), ...){
   
   spl_f <- function(r){
     new_doc_id <- paste0(x[["doc_id"]][r], ".", 1:length(spls[[r]]))
-    tibble(doc_id = new_doc_id,
-           x[r, setdiff(names(x), c("text", "doc_id"))],
-           text = spls[[r]])
+    dplyr::tibble(doc_id = new_doc_id,
+                  x[r, setdiff(names(x), c("text", "doc_id"))],
+                  text = spls[[r]])
   }
-  bind_rows(lapply(1:nrow(x), spl_f))
+  dplyr::bind_rows(lapply(1:nrow(x), spl_f))
 }
 
 
@@ -263,10 +263,19 @@ jl_count_words <- function(x, ...){
   jl_count_tokens(x)
 }
 
-# for grouped data frames, summarize counts
+
+#' Collapse counts for grouped tibbles
+#'
+#' For grouped tibbles, collapse the 'counts' within each group. Like 
+#' summarize, after group_by, but with no choice of function.
+#'
+#' @param x a tibble
+#'
+#' @return an aggregated tibble
+#' @export
 jl_summarize_counts <- function(x){
-  stopifnot(is_grouped_df(x))
-  gg <- group_data(x)
+  stopifnot(dplyr::is_grouped_df(x))
+  gg <- dplyr::group_data(x)
   n <- length(jl_types(x))
   fn <- function(grp_i) {
     bl <- integer(n)
@@ -281,6 +290,12 @@ jl_summarize_counts <- function(x){
   gg
 }
 
+#' Tabulate whatever the tokens are
+#'
+#' @param x a tibble with a 'tokens' variable
+#'
+#' @return a tibble with a 'counts' variable
+#' @export
 jl_count_tokens <- function(x){
   stopifnot("tokens" %in% names(x))
   voc <- attr(x[["tokens"]], "types")
@@ -295,6 +310,13 @@ jl_count_tokens <- function(x){
   x
 }
 
+#' Make counts real variables in wide form
+#'
+#' @param x a tibble with 'counts'
+#' @param prefix what to prefix each counted element's value when it turns into a variable name
+#'
+#' @return a tibble with more columns, one for each counted type
+#' @export
 jl_promote_counts <- function(x, prefix = NULL){
   stopifnot("counts" %in% names(x))
   voc <- attr(x[["counts"]], "types")
@@ -304,13 +326,22 @@ jl_promote_counts <- function(x, prefix = NULL){
   if (length(inter != 0)) # forbid overriding
     stop(paste("'counts' vocabulary overlaps existing variables:",
                inter, "\nRemove or rename the overlap or consider setting prefix"))
-  dd <- as_tibble(jl_dfm(x, inflate = TRUE))
+  dd <- dplyr::as_tibble(jl_dfm(x, inflate = TRUE))
   if (!is.null(prefix))
     colnames(dd) <- voc
   le <- min(which(names(x) %in% c("text", "tokens", "counts", "text")))
-  add_column(x, dd, .before = le) # back with the non-derived non-text variables
+  dplyr::add_column(x, dd, .before = le) # back with the non-derived non-text variables
 }
 
+#' Undo the effects of jl_promote_counts
+#'
+#' Removes the variables that jl_promote_counts added
+#' 
+#' @param x a tibble
+#' @param prefix whether to look for a prefix when removing
+#'
+#' @return a tibble
+#' @export
 jl_demote_counts <- function(x, prefix = NULL){
   voc <- attr(x[["counts"]], "types")
   if (!is.null(prefix))
@@ -319,6 +350,15 @@ jl_demote_counts <- function(x, prefix = NULL){
   x[,rem]
 }
 
+#' Get the vocabulary under counts
+#'
+#' Returns the list of types that are counted in 'counts'. If 
+#' 'counts' does not exist, does the calculation for 'tokens'
+#'
+#' @param x a tibble
+#'
+#' @return a vector of type values
+#' @export
 jl_types <- function(x){
   if ("counts" %in% names(x))
     attr(x[["counts"]], "types")
@@ -328,6 +368,16 @@ jl_types <- function(x){
     stop("neither 'counts' nor 'tokens' exist")
 }
 
+
+#' Get document lengths in tokens
+#'
+#' For each document, how many tokens it contains. Note that this may 
+#' not correspond to the number of words or dictionary categories
+#'
+#' @param x a tibble
+#'
+#' @return a vector of token counts
+#' @export
 jl_doclen <- function(x){
   if ("counts" %in% names(x))
     vapply(x[["counts"]], function(x) sum(x[,2]), FUN.VALUE = c(0L))
@@ -337,6 +387,23 @@ jl_doclen <- function(x){
     stop("neither 'counts' nor 'tokens' exist")
 }
 
+
+#' Extract a document feature matrix
+#' 
+#' Throws away all variables and constructs a documnt feature 
+#' matrix with column names from the types of whatever is counted in 'counts'
+#' ans row names from a chosen variable, or doc_id.
+#' 
+#' Note that requesting an inflated document feature matrix turns a 
+#' Matrix::sparseMatrix into a regular base::matrix and may increase 
+#' memory consumption considerably.
+#' 
+#' @param x a tibble
+#' @param rownames_from which variable to take the row names from (default: doc_id) 
+#' @param inflate whether to return a dense base::matrix (TRUE) or a Matrix::sparseMatrix
+#'
+#' @return a matrix
+#' @export
 jl_dfm <- function(x, rownames_from = "doc_id",
                    inflate = FALSE){
   stopifnot("counts" %in% names(x))
@@ -346,10 +413,10 @@ jl_dfm <- function(x, rownames_from = "doc_id",
   if (!is.null(rownames_from))
     rws <- x[[rownames_from]]
   cls <- jl_types(x)
-  m <- sparseMatrix(rep(1:nrow(x), lengths(j)),
-                    j = unlist(j),
-                    x = unlist(v),
-                    dimnames = list(doc = rws, feat = cls))
+  m <- Matrix::sparseMatrix(rep(1:nrow(x), lengths(j)),
+                            j = unlist(j),
+                            x = unlist(v),
+                            dimnames = list(doc = rws, feat = cls))
   if (inflate)
     m <- as.matrix(m)
   m

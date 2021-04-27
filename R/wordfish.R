@@ -565,30 +565,21 @@ predict.wordfish <- function(object,
 #' @seealso \code{\link{wordfish}}
 #' @method plot wordfish
 plot.wordfish <- function(x,
-                          truevals = NULL,
-                          level = 0.95,
-                          pch = 20,
-                          sort.by = c("estimate", "true"),
-                          ggplot = FALSE,
+                          truevals=NULL,
+                          level=0.95,
+                          pch=20,
                           ...){
   
   if (!is(x, "wordfish"))
     stop("First argument must be a wordfish model")
   
-  vv <- as.data.frame(predict.wordfish(x, se.fit=TRUE, 
-                                       interval='conf', level=level))
-  sort.by <- match.arg(sort.by)
-  if (sort.by == "estimate")
-    ord <- order(vv$fit)
-  else {
-    stopifnot(!is.null(truevals) && 
-                length(truevals) != length(vv$fit))
-    ord <- order(truevals)
-    truevals <- truevals[ord]
-  }
-  theta <- vv$fit[ord]
-  upper <- vv$upr[ord]
-  lower <- vv$lwr[ord]
+  vv       <- as.data.frame(predict.wordfish(x, se.fit=TRUE, 
+                                             interval='conf', level=level))
+  ord      <- order(vv$fit)
+  theta    <- vv$fit[ord]
+  upper    <- vv$upr[ord]
+  lower    <- vv$lwr[ord]
+  
   name.theta <- x$docs[ord]
   
   if (!is.null(truevals)){
@@ -596,12 +587,8 @@ plot.wordfish <- function(x,
     lims <- c(min(c(theta, truevals, lower)), max(c(theta, truevals, upper)))
     dotchart(theta, labels=name.theta, xlim=lims, pch=pch, ...)
     segments(lower, 1:length(theta), upper, 1:length(theta))
-    coverage <- as.numeric(truevals >= lower & truevals <= upper)
-    points(truevals[coverage == 1], (1:length(theta))[coverage == 1], pch=1)
-    points(truevals[coverage == 0], (1:length(theta))[coverage == 0], pch=19, 
-           col = rgb(139/255,0,0,0.75))
-    title(paste('r =', format(cor(truevals, x$theta), digits=2), 
-                paste0(format(mean(coverage)*100, digits = 2), "% coverage")))
+    points(truevals, 1:length(theta), col=rgb(139/255,0,0,0.75), pch=pch)
+    title(paste('r =', format(cor(truevals, x$theta), digits=4)))
   } else {
     lims <- c(min(c(theta, lower)), max(c(theta, upper)))
     dotchart(theta, labels=name.theta, xlim=lims, pch=pch, ...)
@@ -710,80 +697,6 @@ sim.wordfish <- function(docs=10,
   
   return(val)
 }
-
-## helpers
-var0 <- function(x){ var(x) * (length(x) - 1)/length(x) }
-sd0 <- function(x){ sqrt(var0(x)) }
-scale0 <- function(x){ (x - mean(x)) / sd0(x) }
-
-gen.wordfish <- function(theta, beta, alpha, psi, sigma = 1, mu = 0, 
-                         counts = TRUE){
-  res <- exp(mu + outer(alpha, psi, FUN = `+`) + outer(theta, beta))
-  if (counts) {
-    cd <- rpois(rep(1, N*V), lambda = as.vector(res))
-    res <- matrix(cd, nrow = N)
-  } 
-  if (!is.null(names(theta)))
-    rownames(res) <- names(theta)
-  if (!is.null(names(beta)))
-    colnames(res) <- names(beta)
-  res
-}
-
-sim.wordfish2 <- function(N = 10,
-                          V = 20,
-                          sigma = 1,
-                          dsigma = 0.5,
-                          vsigma = 0.5,
-                          mu = 1){
-
-  theta <- scale0(1:N)
-  beta <- scale0(1:V)
-  
-  alpha <- rnorm(N, sd = dsigma)
-  psi <- rnorm(V, sd = vsigma)
-  d <- exp(mu + outer(alpha, psi, FUN = `+`) + sigma * outer(theta, beta))
-  cd <- rpois(rep(1, N*V), lambda = as.vector(d))
-  Y <- matrix(cd, nrow = N)
-  
-  zfill <- function(vals){
-    formatstr <- paste("%", max(nchar(as.character(vals))), ".f", sep = '')
-    gsub(' ', '0', sprintf(formatstr, vals))
-  }
-  
-  dimnames(Y) <- list(docs = paste0("D", zfill(1:N)),
-                      words = paste0("W", zfill(1:V)))
-  val <- list(Y = Y,
-              theta = theta,
-              beta = beta,
-              psi = psi,
-              alpha = alpha,
-              sigma = sigma,
-              dsigma = dsigma,
-              vsigma = vsigma,
-              mu = mu)
-  class(val) <- c("wordfish.params", "type2")
-  val
-}
-
-param_type.wordfish.params <- function(x){
-  cx <- class(x)
-  if (length(cx) == 2 && cx[1] == "wordfish.params")
-    cx[2]
-  else
-    stop("These don't seem to be wordfish parameters")
-}
-
-type2_to_alpha0.wordfish.params <- function(x){
-  a <- x$alpha
-  m <- x$mu
-  b <- x$beta
-  p <- 
-  p + m
-}
-
-
-
 
 #' Get Fitted Values from a Wordfish Model
 #' 

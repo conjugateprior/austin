@@ -4,8 +4,7 @@
 \alias{predict.classic.wordscores}
 \title{Predict New Document Positions}
 \usage{
-\method{predict}{classic.wordscores}(object, newdata = NULL,
-  rescale = c("lbg", "none"), z = 0.95, ...)
+\method{predict}{classic.wordscores}(object, newdata = NULL, rescale = c("lbg", "none"), z = 0.95, ...)
 }
 \arguments{
 \item{object}{Fitted wordscores model}

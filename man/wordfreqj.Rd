@@ -4,9 +4,14 @@
 \alias{wordfreqj}
 \title{Count Words in Documents}
 \usage{
-wordfreqj(filenames, includenums = FALSE, renamecols = FALSE,
-  stem = FALSE, encoding = ifelse(.Platform$OS.type == "unix", "UTF8",
-  "windows-1252"), verbose = FALSE)
+wordfreqj(
+  filenames,
+  includenums = FALSE,
+  renamecols = FALSE,
+  stem = FALSE,
+  encoding = ifelse(.Platform$OS.type == "unix", "UTF8", "windows-1252"),
+  verbose = FALSE
+)
 }
 \arguments{
 \item{filenames}{a list of filenames}

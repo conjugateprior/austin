@@ -4,7 +4,15 @@
 \alias{plot.wordfish}
 \title{Plot a Wordfish Model}
 \usage{
-\method{plot}{wordfish}(x, truevals = NULL, level = 0.95, pch = 20, ...)
+\method{plot}{wordfish}(
+  x,
+  truevals = NULL,
+  level = 0.95,
+  pch = 20,
+  sort.by = c("estimate", "true"),
+  ggplot = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{a fitted Wordfish model}
