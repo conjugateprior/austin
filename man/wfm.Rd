@@ -49,10 +49,10 @@ matrices.  This functionality is currently limited to objects on which
 }
 \examples{
 
-mat <- matrix(1:6, ncol=2)	
+mat <- matrix(1:6, ncol = 2)	
 rownames(mat) <- c('W1','W2','W3')
 colnames(mat) <- c('D1','D2')
-m <- wfm(mat, word.margin=1)
+m <- wfm(mat, word.margin = 1)
 getdocs(as.docword(m), 'D2')
 
 }

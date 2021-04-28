@@ -1,84 +1,172 @@
 # open question: should tokens keep a types attribute?
 
-#' Create tokens using a dictionary
-#'
-#' Runs a dictionary on the text column of x to create 'tokens' variable 
-#' consisting of dictionary matches to each word. Non-matching words
-#' from the dictionary generate no token.
-#'
-#' @param x a tibble
-#' @param dictionary a quanteda content analysis dictionary
-#' @param ... extra arguments to tokenizers::tokenizer_*
-#'
-#' @return a tibble
-#' @export
-jl_tokenize_categories <- function(x, dictionary, ...){
-  stopifnot("text" %in% names(x))
-  res <- quanteda::tokens_lookup(quanteda::tokens(x[["text"]], ...),
-                                 dictionary = dictionary)
-  voc <- sort(unique(unname(unlist(res))))
-  x[["tokens"]] <- lapply(res, function(x){ as.integer(factor(x, levels = voc)) })
-  attr(x[["tokens"]], "types") <- voc
+# make tokens from: 
+#  1. text
+#  3. text and a dictionary
+#
+# make counts from:
+#  1. tokens
+#  2. variables treated as counts
+
+# design docs
+# 
+# we are not in the business of tokenizing, just storing and moving tokens
+#   and generating counts
+# the fundamental data structure is a tibble with some optional list columns
+# structure: a jl_df contains a 
+#   doc_id - a unique identifier 
+#   tokens - a list column containing character vectors
+#   counts - a list column containing matrices and an attribute with the types list
+#
+# use cases:
+#
+# 1. take a data frame with a text column and turn it into a jl_df
+#   with a tokens column
+# 2. take a data frame with a text column and a dictionary and turn it into a jl_df 
+#   with a tokens column
+# 3. take a data frame or jl_df with a tokens column and turn it into a jl_df 
+#   with a counts column+attr
+# 4. take a data frame with some variables that are counts in wide form and 
+#   turn it into a jl_df with a counts column+attr (CMP no tokens)
+# 5. take a jl_df with a counts column+attr and turn it into a document feature 
+#   matrix with rownames, colnames, and sparsity option
+# 6. take a jl_df with a text column and (optionally) a counts column+attr and 
+#   break up its a textual unit, e.g. paragraphs, sentences, etc. (split / disaggregate)
+# 7. take a jl_df and remove documents using a variable expression (filter)
+# 8. take a grouped jl_df with a counts variable and collapse the counts into 
+#   a new jl_df (summarize)
+# 9. Surface counts as new variables in a jl_df
+# 10. Submerge counts surfaced from a counts variable
+# 11. Get token count per document as a vector from a jl_df
+# 12. filter out documents by facts about counts, e.g. minimum length
+
+
+ensure_jl_df <- function(x){
+  stopifnot(is.data.frame(x))
+  if (is.data.frame(x) && !tibble::is_tibble(x))
+    x <- tibble::as_tibble(x)
+  if (!("jl_df" %in% class(x)))
+    class(x) <- c("jl_df", class(x))
   x
 }
 
-
-#' Get category counts from a dictionary
+#' Split each text into tokens
 #'
-#' Runs a dictionary on the text column of x to create 'tokens' variable 
-#' consisting of dictionary matches to each word, (non-matching words
-#' from the dictionary generate no token), then tabulates them within 
-#' each document in 'counts' variable
+#' Fills the 'tokens' variable with tokens. Tokens can be any strings, although 
+#' in the usual cases are words or category/topic labels from a content 
+#' analysis dictionary.
+#' 
+#' Examples:
+#' 
+#' To tokenize words, leave the tokenizer function at its default and add
+#' and extra arguments, e.g. strip_numeric = TRUE, in the ...
+#' 
+#' To tokenize into category/topic labels using quanteda's resources 
+#' set the tokenizer function to (here 
+#' assuming you have the quanteda library loaded - if not, preface every function 
+#' name with quanteda::)
+#' 
+#' dict_tok <- function(txt){ 
+#'   tokens_lookup(tokens(txt, remove_punct = TRUE),
+#'                        dictionary = mydictionary)
+#' }
+#' 
+#' and run as jl_tokenize(mydf, tokenizer = dict_tok)
 #'
-#' This is a shortcut for running  jl_tokenize_categories then jl_count_tokens
-#' and should be used in preference to these two.
+#' This function adds a list column called 'tokens' to contain the tokens
 #'
 #' @param x a tibble
-#' @param dictionary a quanteda content analysis dictionary
-#' @param ... extra arguments to tokenizers::tokenizer_*
+#' @param tokenizer a function that returns a list of character vectors containing tokens
+#' @param ... extra arguments to 'tokenizer'
 #'
-#' @return a tibble with 'tokens' and 'counts' variables
+#' @return jl_df
 #' @export
-jl_count_categories <- function(x, dictionary, ...){
-  jl_tokenize_categories(x, dictionary = dictionary, ...)
-  jl_count_tokens(x)
+jl_tokenize <- function(x, tokenizer = tokenizers::tokenize_words, ...){
+  toks <- tokenizer(x[["text"]], ...)
+  ff <- factor(unlist(toks))
+  ffv <- levels(ff)
+  x[["tokens"]] <- lapply(toks,
+                          function(x) as.integer(factor(x, levels = ffv)))
+  #attr(x[["tokens"]], "types") <- ffv
+  ensure_jl_df(x)
 }
 
-
-
-#' Create corpus from wide counts
+#' Get the set of types
 #'
-#' Given a tibble x of variables, some of which are wide form category counts, and 
-#' the remainder of which are document variables (docvars in quanteda terminology),
-#' decompose the variables specified by the tidyselect arguments into a 'counts'
-#' variable in sparse format and keep the remainder.
-#'   
-#' @param x a tibble 
-#' @param ... a tidy select expression
-#' @param drop_old_vars whther to remove the wide variables (default: TRUE)
-#' @param drop_unused_vars whether to drop wide variables whose column sums are zero
+#' Returns the list of types that are counted in 'counts'. If 
+#' 'counts' does not exist, does the calculation for 'tokens' on the fly
 #'
-#' @return a tibble with a 'counts' variable
+#' @param x a tibble
+#'
+#' @return a vector of type values
 #' @export
-jl_process_topics <- function(x, ...,
-                              drop_old_vars = TRUE,      # drop the columns?
-                              drop_unused_vars = TRUE){  # drop colSum == 0?
-  xx <- dplyr::select(x, ...)
-  
-  voc <- names(xx) # take them in column order
-  ff <- function(rw) {
-    nz <- which(as.numeric(xx[rw,]) > 0)
-    matrix(as.integer(c(nz, xx[rw,][nz])), ncol = 2)
+jl_types <- function(x){
+  if ("counts" %in% names(x))
+    attr(x[["counts"]], "types")
+  else if ("tokens" %in% names(x))
+    levels(unique(unlist(x[["tokens"]])))
+  else
+    stop("neither 'counts' nor 'tokens' variables exist")
+}
+
+#' Tabulate tokens
+#' 
+#' When ... is unused the tokens variable is turned into a counts variable 
+#' containing sparse matrices of 
+#' table counts, one per document. 
+#' 
+#' When ... contains tidy-select expressions 
+#' denoting a column range within x these columns are treated as 'wide' form
+#' counts of categories/topics named by the variables. Note, counts are 
+#' required and the function will break if real numbers are present. 
+#' 
+#' If there is anything in ... and drop_old_vars is 
+#' TRUE (the default) then a new 'counts' replace all everything mentioned in 
+#' the ... expression . 
+#' When drop_unused_vars is TRUE (the default), if a category/topic records
+#' a zero count in every row, this level is dropped. 
+#' 
+#' The ... case is designed for folding existing cross-tabulated data into 
+#' a jl_df, e.g. hand coded data distributed by the CMP. (Note that in this 
+#' particular case the data will have to be reinflated to counts). 
+#'
+#' @param x a jl_df with a 'tokens' variable
+#' @param ... tidy-select expressions denoting variables in x
+#' @param drop_old_vars whether to drop variables denoted in in ... (default: TRUE)
+#' @param drop_unused_vars whether to unused token levels (default: TRUE)
+#'
+#' @return a jl_df with a 'counts' variable
+#' @export
+jl_count <- function(x, ..., 
+                     drop_old_vars = TRUE,      
+                     drop_unused_vars = TRUE){
+  if (length(list(...)) == 0) {
+    stopifnot("tokens" %in% names(x))
+    voc <- levels(unique(unlist(x[["tokens"]])))
+    n <- length(voc)
+    ff1 <- function(x){
+      cnts <- tabulate(x, n)
+      nz <- which(cnts > 0)
+      matrix(as.integer(c(nz, cnts[nz])), ncol = 2)
+    }
+    x[["counts"]] <- lapply(x[["tokens"]], ff1)
+    attr(x[["counts"]], "types") <- voc
+  } else {
+    xx <- dplyr::select(x, ...)
+    voc <- names(xx) # take them in column order
+    ff2 <- function(rw) {
+      nz <- which(as.numeric(xx[rw,]) > 0)
+      matrix(as.integer(c(nz, xx[rw,][nz])), ncol = 2)
+    }
+    x[["counts"]] <- lapply(1:nrow(x), ff2)
+    attr(x[["counts"]], "types") <- voc
+    if (drop_old_vars)
+      x <- dplyr::select(x, -names(xx))
+    if (drop_unused_vars)
+      x <- jl_reindex(x)
   }
-  x[["counts"]] <- lapply(1:nrow(x), ff)
-  attr(x[["counts"]], "types") <- voc
-  if (drop_old_vars)
-    x <- dplyr::select(x, -names(xx))
-  if (drop_unused_vars)
-    x <- jl_reindex(x)
-  x
+  ensure_jl_df(x)
 }
-
 
 #' Add a document identifier
 #'
@@ -95,56 +183,26 @@ jl_identify <- function(x){
     warning("Removing existing 'doc_id'")
     x[["doc_id"]] <- NULL
   }
-  tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
+  tt <- tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
+  ensure_jl_df(tt)
 }
 
-
-#' Create a corpus
+#' Divide each texts
 #'
-#' Make a data frame or tibble fit for text analysis.
-#'
-#' @param x a data frame or tibble
-#' @param text_var the name of the variable containing text
-#' @param remove_old_text_vars whether to remove old text variable after renaming
-#'
-#' @return a tibble
-#' @export
-jl_incorporate <- function(x, text_var = "text",
-                           remove_old_text_vars = TRUE){
-  stopifnot(text_var %in% names(x))
-  x <- jl_identify(x) # refresh or add a document identifier
-  if (text_var != "text") {
-    if ("text" %in% names(x)) {
-      warning("Renaming existing 'text' variable to 'text_old'")
-      x[["text_old"]] <- x[["text"]]
-      x[["text"]] <- NULL
-    }
-    txtvar <- x[[text_var]]
-    if (remove_old_text_vars)
-      x[[text_var]] <- NULL
-    dplyr::tibble(x, text = txtvar)
-  } else {
-    ti <- which(names(x) == "text")
-    dplyr::tibble(x[,-ti], text = x[["text"]])
-  }
-}
-
-
-
-#' Split a corpus into subunits
-#'
-#' If a document 23 of x contains 3 sentences in its 'text' then 
-#' jl_split(x, "sentences")
-#' returns three new rows with other variables duplicated, 
-#' new 'tokens' values, and doc_ids 23.1 23.2 and 23.3
+#' This function inflates the jl_df by 'exploding' each text using the 
+#' tokenizer function and duplicating the non-textual variables across
+#' the new elements. By default tokenizer choice this function makes 
+#' each paragraph a new document. Replace this function with your prefered 
+#' splitting function. It should return a list of character vectors. To 
+#' add extra arguments to the tokenizer function call, put them in ...
 #'
 #' @param x a tibble
-#' @param what what unit to disaggregate a document to (default: paragraphs)
-#' @param ... extra arguments to give to tokenizers::tokenize_*
+#' @param tokenizer a function that splits each text
+#' @param ... extra arguments to give to tokenizer
 #'
 #' @return a tibble with new doc_id
 #' @export
-jl_split <- function(x, what = c("paragraphs", "sentences", "regex"), ...){
+jl_inflate <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
   stopifnot("text" %in% names(x))
   what <- match.arg(what)
   if ("tokens" %in% names(x)) {
@@ -156,39 +214,36 @@ jl_split <- function(x, what = c("paragraphs", "sentences", "regex"), ...){
     x[["counts"]] <- NULL
   }
   
-  if (what == "paragraphs")
-    spls <- tokenizers::tokenize_paragraphs(x[["text"]], ...)
-  else if (what == "sentences")
-    spls <- tokenizers::tokenize_sentences(x[["text"]], ...)
-  else if (what == "regex")
-    spls <- tokenizers::tokenize_regex(x[["text"]], ...)
-  if (nrow(x) == sum(lengths(spls)))
-    warning("This process will not alter the number of documents!")
-  
+  spls <- tokenizer(x[["text"]], ...)
   spl_f <- function(r){
     new_doc_id <- paste0(x[["doc_id"]][r], ".", 1:length(spls[[r]]))
     dplyr::tibble(doc_id = new_doc_id,
                   x[r, setdiff(names(x), c("text", "doc_id"))],
                   text = spls[[r]])
   }
-  dplyr::bind_rows(lapply(1:nrow(x), spl_f))
+  x <- dplyr::bind_rows(lapply(1:nrow(x), spl_f))
+  ensure_jl_df(x)
 }
 
 
-#' Reindex counts variable
+#' Reindex the counts variable
 #' 
 #' Re indexes 'counts' and provides a new 'types' attribute for it.
+#' You shouldn't have to call this yourself.
 #'
-#' @param res a tibble with a 'counts' variable
+#' @param res a jl_df
 #'
 #' @return a tibble
 jl_reindex <- function(res){
   voc <- attr(res[["counts"]], "types")
   new_vocab <- sort(unique(unlist(lapply(res[["counts"]],
                                          function(x) x[,1]))))
-  message("Reindexing counts: dropping ",
-          length(voc) - length(new_vocab),
-          " types that are not used")
+  if (length(voc) == length(new_vocab)) # check this is always safe!
+    return(res)
+  
+  message("Reindexing counts")
+  if (length(voc) - length(new_vocab) != 0)
+    message("Dropping ", length(voc) - length(new_vocab), " types that are not used")
   tr <- integer(length(voc))
   tr[new_vocab] <- 1:length(new_vocab) # 1 -> 1, 2 (gone) -> 2, 3 -> 2
   res[["counts"]] <- lapply(res[["counts"]],
@@ -202,79 +257,36 @@ jl_reindex <- function(res){
 }
 
 
-#' Filter a corpus
+#' Filter by document variable
 #'
-#' Filter out some documents using dplyr expressions, reindexing 
-#' 'counts' as necessary
+#' Filter documents using logical expressions, as you would in dplyr. This 
+#' function will re-index 'counts' as necessary
 #'
-#' @param x a tibble
-#' @param ... a dplyr expression specifying rows
+#' @param x a jl_df
+#' @param ... a logical expression specifying rows
 #' @param .preserve whether to keep groups (default: FALSE)
 #'
-#' @return a tibble
+#' @return a jl_df
 #' @export
 jl_filter <- function(x, ..., .preserve = FALSE){
   res <- dplyr::filter(x, ..., .preserve = .preserve)
   if ("counts" %in% names(res))
-    jl_reindex(res)
-  else
-    res
+    res <- jl_reindex(res)
+  ensure_jl_df(res)
 }
 
-#' Split text into words
+#' Collapse counts to groups
 #'
-#' Fills the 'tokens' variable with word tokens.
-#'
-#' @param x a tibble
-#' @param ... extra arguments to tokenizers::tokenize_*
-#'
-#' @return a tibble
-#' @export
-jl_tokenize_words <- function(x, ...){
-  toks <- tokenizers::tokenize_words(x[["text"]], ...)
-  ff <- factor(unlist(toks))
-  ffv <- levels(ff)
-  x[["tokens"]] <- lapply(toks,
-                          function(x) as.integer(factor(x, levels = ffv)))
-  attr(x[["tokens"]], "types") <- ffv
-  x
-}
-
-#' Get word counts
-#'
-#' Splits 'text' into words as a 'tokens' variable then tabulates them 
-#' within each document in 'counts' variable
-#'
-#' This is a shortcut for running  jl_tokenize_words then jl_count_tokens
-#' and should be used in preference to these two.
-#'
-#' @param x a tibble
-#' @param ... extra arguments to tokenizers::tokenize_*
-#'
-#' @return a tibble
-#' @export
-jl_count_words <- function(x, ...){
-  toks <- tokenizers::tokenize_words(x[["text"]], ...)
-  ff <- factor(unlist(toks))
-  ffv <- levels(ff)
-  x[["tokens"]] <- lapply(toks,
-                          function(x) as.integer(factor(x, levels = ffv)))
-  attr(x[["tokens"]], "types") <- ffv
-  jl_count_tokens(x)
-}
-
-
-#' Collapse counts for grouped tibbles
-#'
-#' For grouped tibbles, collapse the 'counts' within each group. Like 
+#' If a jl_df is grouped, collapse the 'counts' within each group. Like 
 #' summarize, after group_by, but with no choice of function.
 #'
-#' @param x a tibble
+#' @param x a grouped jl_df
 #'
-#' @return an aggregated tibble
+#' @return an jl_df
 #' @export
-jl_summarize_counts <- function(x){
-  stopifnot(dplyr::is_grouped_df(x))
+jl_collapse <- function(x){
+  if (!dplyr::is_grouped_df(x))
+    stop("This is object is not grouped. Perhaps you were looking for jl_dfm?")
   gg <- dplyr::group_data(x)
   n <- length(jl_types(x))
   fn <- function(grp_i) {
@@ -287,35 +299,17 @@ jl_summarize_counts <- function(x){
   gg[["counts"]] <- lapply(gg[[".rows"]], fn)
   attr(gg[["counts"]], "types") <- jl_types(x)
   gg[[".rows"]] <- NULL
-  gg
+  gg <- tibble::add_column(gg, doc_id = 1:nrow(gg), .before = 1)
+  ensure_jl_df(gg)
 }
 
-#' Tabulate whatever the tokens are
-#'
-#' @param x a tibble with a 'tokens' variable
-#'
-#' @return a tibble with a 'counts' variable
-#' @export
-jl_count_tokens <- function(x){
-  stopifnot("tokens" %in% names(x))
-  voc <- attr(x[["tokens"]], "types")
-  n <- length(voc)
-  ff <- function(x){
-    cnts <- tabulate(x, n)
-    nz <- which(cnts > 0)
-    matrix(as.integer(c(nz, cnts[nz])), ncol = 2)
-  }
-  x[["counts"]] <- lapply(x[["tokens"]], ff)
-  attr(x[["counts"]], "types") <- voc
-  x
-}
 
-#' Make counts real variables in wide form
+#' Make counts full variables in wide form
 #'
-#' @param x a tibble with 'counts'
+#' @param x a jl_df with 'counts'
 #' @param prefix what to prefix each counted element's value when it turns into a variable name
 #'
-#' @return a tibble with more columns, one for each counted type
+#' @return a jl_df
 #' @export
 jl_promote_counts <- function(x, prefix = NULL){
   stopifnot("counts" %in% names(x))
@@ -330,7 +324,8 @@ jl_promote_counts <- function(x, prefix = NULL){
   if (!is.null(prefix))
     colnames(dd) <- voc
   le <- min(which(names(x) %in% c("text", "tokens", "counts", "text")))
-  tibble::add_column(x, dd, .before = le) # back with the non-derived non-text variables
+  x <- tibble::add_column(x, dd, .before = le) # back with the non-derived non-text variables
+  ensure_jl_df(x)
 }
 
 #' Undo the effects of jl_promote_counts
@@ -347,27 +342,8 @@ jl_demote_counts <- function(x, prefix = NULL){
   if (!is.null(prefix))
     voc <- paste0(prefix, voc)
   rem <- setdiff(names(x), voc)
-  x[,rem]
+  ensure_jl_df(x[,rem])
 }
-
-#' Get the vocabulary under counts
-#'
-#' Returns the list of types that are counted in 'counts'. If 
-#' 'counts' does not exist, does the calculation for 'tokens'
-#'
-#' @param x a tibble
-#'
-#' @return a vector of type values
-#' @export
-jl_types <- function(x){
-  if ("counts" %in% names(x))
-    attr(x[["counts"]], "types")
-  else if ("tokens" %in% names(x))
-    attr(x[["tokens"]], "types")
-  else
-    stop("neither 'counts' nor 'tokens' exist")
-}
-
 
 #' Get document lengths in tokens
 #'
@@ -378,7 +354,7 @@ jl_types <- function(x){
 #'
 #' @return a vector of token counts
 #' @export
-jl_doclen <- function(x){
+jl_lengths <- function(x){
   if ("counts" %in% names(x))
     vapply(x[["counts"]], function(x) sum(x[,2]), FUN.VALUE = c(0L))
   else if ("tokens" %in% names(x))
@@ -386,7 +362,6 @@ jl_doclen <- function(x){
   else
     stop("neither 'counts' nor 'tokens' exist")
 }
-
 
 #' Extract a document feature matrix
 #' 
@@ -421,3 +396,10 @@ jl_dfm <- function(x, rownames_from = "doc_id",
     m <- as.matrix(m)
   m
 }
+
+## for transforming the existing data sets, use
+# demanif <- data.frame(t(demanif)) %>%
+#   rownames_to_column %>%
+#   extract(rowname, into = c("party", "year", "type"), 
+#           regex = "t([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
+#   jl_count(4:ncol(.))

@@ -2,16 +2,17 @@
 % Please edit documentation in R/jl.R
 \name{jl_reindex}
 \alias{jl_reindex}
-\title{Reindex counts variable}
+\title{Reindex the counts variable}
 \usage{
 jl_reindex(res)
 }
 \arguments{
-\item{res}{a tibble with a 'counts' variable}
+\item{res}{a jl_df}
 }
 \value{
 a tibble
 }
 \description{
 Re indexes 'counts' and provides a new 'types' attribute for it.
+You shouldn't have to call this yourself.
 }

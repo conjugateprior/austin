@@ -2,21 +2,21 @@
 % Please edit documentation in R/jl.R
 \name{jl_filter}
 \alias{jl_filter}
-\title{Filter a corpus}
+\title{Filter by document variable}
 \usage{
 jl_filter(x, ..., .preserve = FALSE)
 }
 \arguments{
-\item{x}{a tibble}
+\item{x}{a jl_df}
 
-\item{...}{a dplyr expression specifying rows}
+\item{...}{a logical expression specifying rows}
 
 \item{.preserve}{whether to keep groups (default: FALSE)}
 }
 \value{
-a tibble
+a jl_df
 }
 \description{
-Filter out some documents using dplyr expressions, reindexing 
-'counts' as necessary
+Filter documents using logical expressions, as you would in dplyr. This 
+function will re-index 'counts' as necessary
 }

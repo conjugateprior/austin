@@ -130,18 +130,18 @@ Austin treats the first parameterization as a computational convenience to make 
 <code class="sourceCode R"><span class="fu"><a href="../reference/as.worddoc.html">as.worddoc</a></span><span class="op">(</span><span class="va">dd</span><span class="op">$</span><span class="va">Y</span><span class="op">)</span>
 <span class="co">##      docs</span>
 <span class="co">## words D01 D02 D03 D04 D05 D06 D07 D08 D09 D10</span>
-<span class="co">##   W01  40  34  37  36  21  15  15   9  13  16</span>
-<span class="co">##   W02  51  35  31  27  27  24  11  18  14   7</span>
-<span class="co">##   W03  36  41  33  24  28  27  17  14  12   8</span>
-<span class="co">##   W04  11   6  12  15  28  20  30  29  36  36</span>
-<span class="co">##   W05   5   8  15  13  19  28  27  36  37  45</span>
-<span class="co">##   W06   6  16  12  14  19  24  33  28  37  45</span>
-<span class="co">##   W07  87  90  82  82  71  54  47  31  22  21</span>
-<span class="co">##   W08 110  79  85  65  56  58  48  45  27  20</span>
-<span class="co">##   W09 101 110  73  87  65  45  53  41  28  18</span>
-<span class="co">##   W10  17  27  40  51  56  57  70  72  92  90</span>
-<span class="co">##   W11  13  22  47  40  51  86  59  80  81 101</span>
-<span class="co">##   W12  23  32  33  46  59  62  90  97 101  93</span></code></pre></div>
+<span class="co">##   W01  48  40  36  36  37  18  26  12   7  10</span>
+<span class="co">##   W02  42  26  27  26  25  24  21  12  10   9</span>
+<span class="co">##   W03  40  27  27  25  21  17  16  14  16  10</span>
+<span class="co">##   W04   9   6  13  13  20   8  21  32  35  39</span>
+<span class="co">##   W05   9  12  14  14  27  28  25  27  29  40</span>
+<span class="co">##   W06   9   7  14  20  19  27  29  34  28  42</span>
+<span class="co">##   W07 103 103  85  73  65  74  60  25  24  11</span>
+<span class="co">##   W08  90 102  86  72  72  60  46  42  22  21</span>
+<span class="co">##   W09  82  88  88  85  62  66  41  34  23  15</span>
+<span class="co">##   W10  19  25  48  42  49  54  78  94 104  89</span>
+<span class="co">##   W11  17  33  26  55  50  69  70  88  94 118</span>
+<span class="co">##   W12  32  31  36  39  53  55  67  86 108  96</span></code></pre></div>
 <p>where Y is an object of class <code>wfm</code>.</p>
 <p>To scale this data we use the wordfish function</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -154,47 +154,47 @@ Austin treats the first parameterization as a computational convenience to make 
 <span class="co">##  wordfish(wfm = dd$Y)</span>
 <span class="co">## </span>
 <span class="co">## Document Positions:</span>
-<span class="co">##     Estimate Std. Error    Lower    Upper</span>
-<span class="co">## D01  -1.6158    0.11842 -1.84791 -1.38371</span>
-<span class="co">## D02  -1.1563    0.10155 -1.35531 -0.95724</span>
-<span class="co">## D03  -0.6836    0.09043 -0.86089 -0.50641</span>
-<span class="co">## D04  -0.5301    0.08806 -0.70265 -0.35748</span>
-<span class="co">## D05  -0.1112    0.08449 -0.27680  0.05441</span>
-<span class="co">## D06   0.2427    0.08471  0.07671  0.40878</span>
-<span class="co">## D07   0.4804    0.08652  0.31084  0.64998</span>
-<span class="co">## D08   0.7561    0.09031  0.57911  0.93312</span>
-<span class="co">## D09   1.1468    0.09896  0.95284  1.34076</span>
-<span class="co">## D10   1.4671    0.10912  1.25327  1.68100</span></code></pre></div>
+<span class="co">##     Estimate Std. Error   Lower    Upper</span>
+<span class="co">## D01 -1.32058    0.10369 -1.5238 -1.11735</span>
+<span class="co">## D02 -1.13541    0.09800 -1.3275 -0.94334</span>
+<span class="co">## D03 -0.77610    0.08961 -0.9517 -0.60046</span>
+<span class="co">## D04 -0.50423    0.08547 -0.6718 -0.33670</span>
+<span class="co">## D05 -0.24329    0.08321 -0.4064 -0.08021</span>
+<span class="co">## D06 -0.08327    0.08262 -0.2452  0.07867</span>
+<span class="co">## D07  0.28731    0.08361  0.1234  0.45118</span>
+<span class="co">## D08  0.89541    0.09247  0.7142  1.07665</span>
+<span class="co">## D09  1.27124    0.10277  1.0698  1.47267</span>
+<span class="co">## D10  1.60633    0.11541  1.3801  1.83252</span></code></pre></div>
 <p>To examine the word-specific parameters use</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span><span class="op">(</span><span class="va">wf</span><span class="op">)</span>
 <span class="co">## $words</span>
 <span class="co">##           beta      psi</span>
-<span class="co">## W01 -0.3533603 3.101146</span>
-<span class="co">## W02 -0.4173644 3.111379</span>
-<span class="co">## W03 -0.3368857 3.124548</span>
-<span class="co">## W04  0.6788164 3.032309</span>
-<span class="co">## W05  0.8291565 3.007068</span>
-<span class="co">## W06  0.7382211 3.054957</span>
-<span class="co">## W07 -0.3568285 4.011041</span>
-<span class="co">## W08 -0.3500852 4.024031</span>
-<span class="co">## W09 -0.3925230 4.052457</span>
-<span class="co">## W10  0.6436136 3.988239</span>
-<span class="co">## W11  0.6982927 3.980070</span>
-<span class="co">## W12  0.6694401 4.084139</span>
+<span class="co">## W01 -0.4940437 3.167961</span>
+<span class="co">## W02 -0.3668250 3.024823</span>
+<span class="co">## W03 -0.2969896 3.007882</span>
+<span class="co">## W04  0.7478054 2.841107</span>
+<span class="co">## W05  0.5569649 3.062175</span>
+<span class="co">## W06  0.6221665 3.054829</span>
+<span class="co">## W07 -0.5159452 3.994070</span>
+<span class="co">## W08 -0.4142881 4.022037</span>
+<span class="co">## W09 -0.4377205 3.963962</span>
+<span class="co">## W10  0.6338535 4.016511</span>
+<span class="co">## W11  0.6748593 4.028041</span>
+<span class="co">## W12  0.6170912 4.025096</span>
 <span class="co">## </span>
 <span class="co">## $docs</span>
 <span class="co">##           alpha</span>
 <span class="co">## D01  0.00000000</span>
-<span class="co">## D02  0.07190769</span>
-<span class="co">## D03  0.11197421</span>
-<span class="co">## D04  0.11375821</span>
-<span class="co">## D05  0.08691017</span>
-<span class="co">## D06  0.02640250</span>
-<span class="co">## D07 -0.03424749</span>
-<span class="co">## D08 -0.12240428</span>
-<span class="co">## D09 -0.27970575</span>
-<span class="co">## D10 -0.43204156</span>
+<span class="co">## D02  0.02851853</span>
+<span class="co">## D03  0.08550327</span>
+<span class="co">## D04  0.10755805</span>
+<span class="co">## D05  0.10976742</span>
+<span class="co">## D06  0.10146206</span>
+<span class="co">## D07  0.05346961</span>
+<span class="co">## D08 -0.10829683</span>
+<span class="co">## D09 -0.25285970</span>
+<span class="co">## D10 -0.40450291</span>
 <span class="co">## </span>
 <span class="co">## attr(,"class")</span>
 <span class="co">## [1] "coef.wordfish" "list"</span></code></pre></div>
@@ -204,8 +204,8 @@ Austin treats the first parameterization as a computational convenience to make 
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span><span class="op">(</span><span class="va">wf</span>, newdata<span class="op">=</span><span class="fu"><a href="../reference/getdocs.html">getdocs</a></span><span class="op">(</span><span class="va">dd</span><span class="op">$</span><span class="va">Y</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">4</span>,<span class="fl">5</span><span class="op">)</span><span class="op">)</span>, se.fit<span class="op">=</span><span class="cn">TRUE</span>, interval<span class="op">=</span><span class="st">'conf'</span><span class="op">)</span>
 <span class="co">##            fit     se.fit        lwr         upr</span>
-<span class="co">## D04 -0.5300624 0.08805635 -0.7026497 -0.35747513</span>
-<span class="co">## D05 -0.1111958 0.08449235 -0.2767977  0.05440619</span></code></pre></div>
+<span class="co">## D04 -0.5042258 0.08547337 -0.6717506 -0.33670111</span>
+<span class="co">## D05 -0.2432945 0.08320553 -0.4063744 -0.08021468</span></code></pre></div>
 </div>
 <div id="scaling-with-wordscores" class="section level1">
 <h1 class="hasAnchor">

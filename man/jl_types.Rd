@@ -2,7 +2,7 @@
 % Please edit documentation in R/jl.R
 \name{jl_types}
 \alias{jl_types}
-\title{Get the vocabulary under counts}
+\title{Get the set of types}
 \usage{
 jl_types(x)
 }
@@ -14,5 +14,5 @@ a vector of type values
 }
 \description{
 Returns the list of types that are counted in 'counts'. If 
-'counts' does not exist, does the calculation for 'tokens'
+'counts' does not exist, does the calculation for 'tokens' on the fly
 }

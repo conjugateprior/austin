@@ -2,18 +2,18 @@
 % Please edit documentation in R/jl.R
 \name{jl_promote_counts}
 \alias{jl_promote_counts}
-\title{Make counts real variables in wide form}
+\title{Make counts full variables in wide form}
 \usage{
 jl_promote_counts(x, prefix = NULL)
 }
 \arguments{
-\item{x}{a tibble with 'counts'}
+\item{x}{a jl_df with 'counts'}
 
 \item{prefix}{what to prefix each counted element's value when it turns into a variable name}
 }
 \value{
-a tibble with more columns, one for each counted type
+a jl_df
 }
 \description{
-Make counts real variables in wide form
+Make counts full variables in wide form
 }
