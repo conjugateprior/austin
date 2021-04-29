@@ -2,22 +2,14 @@
 % Please edit documentation in R/jl.R
 \name{jl_count_from_vars}
 \alias{jl_count_from_vars}
-\title{Construct counts from existing variables
- 
-When ... contains tidy-select expressions 
-denoting a column range within x these columns are treated as 'wide' form
-counts of categories/topics named by the variables. 
-Note: counts must be integers or coercible into integers without loss
-as they are used for indexing.}
+\title{Construct counts from existing variables}
 \usage{
-jl_count_from_vars(x, ..., drop_old_vars = TRUE, drop_unused_vars = TRUE)
+jl_count_from_vars(x, ..., drop_unused_vars = TRUE)
 }
 \arguments{
 \item{x}{a jl_df object}
 
 \item{...}{tidy-select expressions denoting variables in x}
-
-\item{drop_old_vars}{whether to drop variables denoted in in ... (default: TRUE)}
 
 \item{drop_unused_vars}{whether to unused token levels (default: TRUE)}
 }
@@ -25,18 +17,24 @@ jl_count_from_vars(x, ..., drop_old_vars = TRUE, drop_unused_vars = TRUE)
 a jl_df with a 'counts' variable
 }
 \description{
-If drop_old_vars is 
-TRUE (the default) then a new 'counts' replace all variables mentioned in 
-the ... expression . 
-If drop_unused_vars is TRUE (the default), if a category/topic records
-a zero count in every row, this level is dropped.
+When tidy-select expressions are present in ...
+these columns are treated as counts in 'wide' form. Their counts are 
+folded into the 'counts' variable and then removed.
 }
 \details{
+If drop_unused_vars is TRUE (the default), if a category/topic records
+a zero count in every row, this level is dropped. 
+
 This function is designed for folding existing cross-tabulated data into 
 a jl_df, i.e. when the text or tokens are no longer available. A prominent 
 example is hand coded data distributed by the CMP. (In this 
 particular case the data will also have to be re-inflated from percentages to 
 counts beforehand). 
+
+Notes:
+
+Variables refered to must contain integers or be coercible 
+into integers without loss as they will be used for indexing. 
 
 Any existing 
 'tokens' variable will be removed to ensure that there

@@ -18,11 +18,3 @@ and Poisson-distributed word counts.
 The package currently implements Wordfish (Slapin and Proksch, 2008) and 
 Wordscores (Laver, Benoit and Garry, 2003).  See references for details.
 }
-\references{
-J. Slapin and S.-O. Proksch (2008) 'A scaling model for
-  estimating time-series party positions from texts' American Journal of
-  Political Science 52(3), 705-722.
-  
-  Laver, Benoit and Garry (2003) `Estimating policy positions from
-  political text using words as data' American Political Science Review 97(2).
-}

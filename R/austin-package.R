@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #' austin: Do things with words
 #' 
 #' Austin helps you see what people, usually politicians, do with words.

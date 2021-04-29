@@ -7,8 +7,15 @@
 \title{Irish Budget Debate Data 2009}
 \description{
 Irish budget debate 2009
+
+Irish budget debate 2009
 }
 \details{
+This are word counts from the 2009 Budget debate in Ireland.
+
+This is a word frequency nmatrix.  Loading this data also makes available
+\code{iebudget2009cov} which contains covariates for the speakers.
+
 This are word counts from the 2009 Budget debate in Ireland.
 
 This is a word frequency nmatrix.  Loading this data also makes available

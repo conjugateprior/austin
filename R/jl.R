@@ -460,11 +460,11 @@ jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
     m <- as.matrix(m)
   m
 }
-
-conv <- function(olddata){
-  data.frame(t(olddata)) %>%
-  rownames_to_column %>%
-  extract(rowname, into = c("party", "year", "type"), 
-          regex = "t[A-Z]+[.]([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
-  jl_count_from_vars(4:ncol(.))
-}
+# 
+# conv <- function(olddata){
+#   data.frame(t(olddata)) %>%
+#   rownames_to_column %>%
+#   extract(rowname, into = c("party", "year", "type"), 
+#           regex = "t[A-Z]+[.]([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
+#   jl_count_from_vars(4:ncol(.))
+# }

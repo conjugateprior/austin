@@ -15,33 +15,8 @@ jl_count(x, drop_tokens_after = FALSE)
 a jl_df with a 'counts' variable
 }
 \description{
-When ... is unused the tokens variable is turned into a counts variable 
+The 'tokens' variable is turned into a 'counts' variable 
 containing sparse matrices of 
-table counts, one per document. Any 'tokens' variable is maintained.
-}
-\details{
-When ... contains tidy-select expressions 
-denoting a column range within x these columns are treated as 'wide' form
-counts of categories/topics named by the variables. Note, counts are 
-required and the function will break if real numbers are present. 
-
-If there is anything in ... and drop_old_vars is 
-TRUE (the default) then a new 'counts' replace all variables mentioned in 
-the ... expression . 
-When drop_unused_vars is TRUE (the default), if a category/topic records
-a zero count in every row, this level is dropped. 
-
-The ... case is designed for folding existing cross-tabulated data into 
-a jl_df, e.g. hand coded data distributed by the CMP. (Note that in this 
-particular case the data will have to be reinflated to counts). 
-
-Notes: 
-
-Only if a tidy select expressions are provided are drop_ parameters 
-considered
-
-If tidy-select expressions are provided then any existing 
-'tokens' variable will be removed to ensure that there
-is no mismatch between 'tokens' and 'counts'. (Setting 
-drop_tokens_after = FALSE will not change this behaviour.)
+table counts, one per document. Any 'tokens' variable is maintained
+unless drop_tokens_after is TRUE.
 }

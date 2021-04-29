@@ -4,25 +4,24 @@
 \alias{jl_dfm}
 \title{Extract a document feature matrix}
 \usage{
-jl_dfm(x, rownames_from = "doc_id", inflate = FALSE)
+jl_dfm(x, rownames_from = "doc_id", sparse = TRUE)
 }
 \arguments{
 \item{x}{a tibble}
 
 \item{rownames_from}{which variable to take the row names from (default: doc_id)}
 
-\item{inflate}{whether to return a dense base::matrix (TRUE) or a Matrix::sparseMatrix}
+\item{sparse}{whether to return a sparse (the default) or dense matrix}
 }
 \value{
-a matrix
+CsparseMatrix (or matrix if sparse = FALSE)
 }
 \description{
-Throws away all variables and constructs a documnt feature 
-matrix with column names from the types of whatever is counted in 'counts'
-ans row names from a chosen variable, or doc_id.
-}
-\details{
-Note that requesting an inflated document feature matrix turns a 
-Matrix::sparseMatrix into a regular base::matrix and may increase 
-memory consumption considerably.
+Constructs a document feature 
+matrix using 'counts' with column names taken from the types attribute 
+of 'counts' and row names from 'doc_id' or a user provided variable.
+ 
+If sparse = FALSE (the default) then the result is a CsparseMatrix from the 
+Matrix package and if TRUE, a dense base::matrix. Note that Non-sparse 
+document feature matrices may become quite large.
 }

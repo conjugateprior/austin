@@ -5,7 +5,7 @@
 \alias{demanif.econ}
 \title{Economics sections of German Party Manifestos}
 \source{
-These data courtesy are of S.-O. Proksch.
+These data are courtesy of S.-O. Proksch.
 }
 \description{
 A word frequency matrix from the economic sections of German political party
