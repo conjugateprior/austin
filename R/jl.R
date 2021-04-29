@@ -111,88 +111,132 @@ jl_types <- function(x){
 
 #' Tabulate tokens
 #' 
-#' When ... is unused the tokens variable is turned into a counts variable 
+#' The 'tokens' variable is turned into a 'counts' variable 
 #' containing sparse matrices of 
-#' table counts, one per document. 
+#' table counts, one per document. Any 'tokens' variable is maintained
+#' unless drop_tokens_after is TRUE.
+#'
+#' @param x a jl_df object
+#' @param drop_tokens_after whether to drop 'tokens' variable after 'counts' computation
+#'
+#' @return a jl_df with a 'counts' variable
+#' @export
+jl_count <- function(x, drop_tokens_after = FALSE){
+  stopifnot("tokens" %in% names(x))
+  voc <- levels(unique(unlist(x[["tokens"]])))
+  n <- length(voc)
+  ff1 <- function(x){
+    cnts <- tabulate(x, n)
+    nz <- which(cnts > 0)
+    matrix(as.integer(c(nz, cnts[nz])), ncol = 2)
+  }
+  x[["counts"]] <- lapply(x[["tokens"]], ff1)
+  attr(x[["counts"]], "types") <- voc
+  ensure_jl_df(x)
+}
+
+#' Construct counts from existing variables
 #' 
-#' When ... contains tidy-select expressions 
-#' denoting a column range within x these columns are treated as 'wide' form
-#' counts of categories/topics named by the variables. Note, counts are 
-#' required and the function will break if real numbers are present. 
+#' When tidy-select expressions are present in ...
+#' these columns are treated as counts in 'wide' form. Their counts are 
+#' folded into the 'counts' variable and then removed.
 #' 
-#' If there is anything in ... and drop_old_vars is 
-#' TRUE (the default) then a new 'counts' replace all everything mentioned in 
-#' the ... expression . 
-#' When drop_unused_vars is TRUE (the default), if a category/topic records
+#' If drop_unused_vars is TRUE (the default), if a category/topic records
 #' a zero count in every row, this level is dropped. 
 #' 
-#' The ... case is designed for folding existing cross-tabulated data into 
-#' a jl_df, e.g. hand coded data distributed by the CMP. (Note that in this 
-#' particular case the data will have to be reinflated to counts). 
+#' This function is designed for folding existing cross-tabulated data into 
+#' a jl_df, i.e. when the text or tokens are no longer available. A prominent 
+#' example is hand coded data distributed by the CMP. (In this 
+#' particular case the data will also have to be re-inflated from percentages to 
+#' counts beforehand). 
 #'
-#' @param x a jl_df with a 'tokens' variable
+#' Notes:
+#' 
+#' Variables refered to must contain integers or be coercible 
+#' into integers without loss as they will be used for indexing. 
+#' 
+#' Any existing 
+#' 'tokens' variable will be removed to ensure that there
+#' is no mismatch between 'tokens' and 'counts'.
+#'
+#' @param x a jl_df object
 #' @param ... tidy-select expressions denoting variables in x
-#' @param drop_old_vars whether to drop variables denoted in in ... (default: TRUE)
 #' @param drop_unused_vars whether to unused token levels (default: TRUE)
 #'
 #' @return a jl_df with a 'counts' variable
 #' @export
-jl_count <- function(x, ..., 
-                     drop_old_vars = TRUE,      
-                     drop_unused_vars = TRUE){
-  if (length(list(...)) == 0) {
-    stopifnot("tokens" %in% names(x))
-    voc <- levels(unique(unlist(x[["tokens"]])))
-    n <- length(voc)
-    ff1 <- function(x){
-      cnts <- tabulate(x, n)
-      nz <- which(cnts > 0)
-      matrix(as.integer(c(nz, cnts[nz])), ncol = 2)
-    }
-    x[["counts"]] <- lapply(x[["tokens"]], ff1)
-    attr(x[["counts"]], "types") <- voc
-  } else {
-    xx <- dplyr::select(x, ...)
-    voc <- names(xx) # take them in column order
-    ff2 <- function(rw) {
-      nz <- which(as.numeric(xx[rw,]) > 0)
-      matrix(as.integer(c(nz, xx[rw,][nz])), ncol = 2)
-    }
-    x[["counts"]] <- lapply(1:nrow(x), ff2)
-    attr(x[["counts"]], "types") <- voc
-    if (drop_old_vars)
-      x <- dplyr::select(x, -names(xx))
-    if (drop_unused_vars)
-      x <- jl_reindex(x)
+jl_count_from_vars <- function(x, ..., 
+                               drop_unused_vars = TRUE){ 
+  if ("tokens" %in% names(x)) {
+    message("Removing existing 'tokens' variable")
+    x[["tokens"]] <- NULL
   }
+  xx <- dplyr::select(x, ...)
+  voc <- names(xx) # take them in column order
+  ff2 <- function(rw) {
+    nz <- which(as.numeric(xx[rw,]) > 0)
+    matrix(as.integer(c(nz, xx[rw,][nz])), ncol = 2)
+  }
+  cts <- lapply(1:nrow(x), ff2)
+  x <- dplyr::select(x, -names(xx)) 
+  x[["counts"]] <- cts
+  attr(x[["counts"]], "types") <- voc
+  if (drop_unused_vars)
+    x <- jl_reindex(x)
   ensure_jl_df(x)
 }
 
 #' Add a document identifier
 #'
 #' Adds a variable 'doc_id' to uniquely identify each row. This identifier
-#' may later, if jl_split is used, contain information about disaggregation 
-#' level. If the document identifier already exists, overwrite it.
+#' may later, if jl_expand is used, this will be augmented with  information 
+#' about disaggregation level. 
 #'
-#' @param x a tibble
+#' @param x a data.frame 
+#' @param v variable to be used as a unique identifier (Default: one will be constructed)
+#' @param drop_original whether to remove v after it is assigned to 'doc_id'
 #'
-#' @return a tibble
+#' @return a jl_df
 #' @export
-jl_identify <- function(x){
-  if ("doc_id" %in% names(x)) {
-    warning("Removing existing 'doc_id'")
-    x[["doc_id"]] <- NULL
+jl_identify <- function(x, v = NULL, drop_original = TRUE){
+  if (is.null(v)) {
+    if ("doc_id" %in% names(x))
+      message("Overwriting existing 'doc_id'")
+    tt <- tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
+    return(ensure_jl_df(tt))
   }
-  tt <- tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
-  ensure_jl_df(tt)
+  check_length <- function(z) 
+    if (length(z) != nrow(x))
+      stop("v parameter does not have the same length as the number of ", 
+           "rows")
+  check_uniqueness <- function(z)
+    if (length(unique(z)) != nrow(x))
+      stop("v parameter is not a unique identifier")
+  
+  if (length(v) > 1) { # they are handing us a whole vector 
+    check_length(v)
+    check_uniqueness(v)
+    x[["doc_id"]] <- v
+  } else { 
+    # they are handing us a variable name
+    check_length(x[[v]])
+    check_uniqueness(x[[v]])
+    x[["doc_id"]] <- x[[v]]
+    if (drop_original && v != "doc_id")
+      x[[v]] <- NULL
+  }
+  ensure_jl_df(x)
 }
 
-#' Divide each texts
+
+#' Split each text into new ones
 #'
 #' This function inflates the jl_df by 'exploding' each text using the 
 #' tokenizer function and duplicating the non-textual variables across
-#' the new elements. By default tokenizer choice this function makes 
-#' each paragraph a new document. Replace this function with your prefered 
+#' the new elements. 
+#' 
+#' By default tokenizer choice this function makes 
+#' each paragraph a new document. Replace this function with your preferred 
 #' splitting function. It should return a list of character vectors. To 
 #' add extra arguments to the tokenizer function call, put them in ...
 #'
@@ -202,9 +246,8 @@ jl_identify <- function(x){
 #'
 #' @return a tibble with new doc_id
 #' @export
-jl_inflate <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
+jl_expand <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
   stopifnot("text" %in% names(x))
-  what <- match.arg(what)
   if ("tokens" %in% names(x)) {
     warning("Dropping existing 'tokens' variable")
     x[["tokens"]] <- NULL
@@ -320,7 +363,7 @@ jl_promote_counts <- function(x, prefix = NULL){
   if (length(inter != 0)) # forbid overriding
     stop(paste("'counts' vocabulary overlaps existing variables:",
                inter, "\nRemove or rename the overlap or consider setting prefix"))
-  dd <- dplyr::as_tibble(jl_dfm(x, inflate = TRUE))
+  dd <- dplyr::as_tibble(jl_dfm(x, sparse = FALSE))
   if (!is.null(prefix))
     colnames(dd) <- voc
   le <- min(which(names(x) %in% c("text", "tokens", "counts", "text")))
@@ -363,24 +406,45 @@ jl_lengths <- function(x){
     stop("neither 'counts' nor 'tokens' exist")
 }
 
+#' Get type counts for tokens
+#'
+#' This assumes that a 'counts' variable exists. Use jl_count to create it
+#' if necessary.
+#'
+#' @param x a jl_df object
+#'
+#' @return a vector of type counts
+#' @export
+jl_freqs <- function(x){
+  stopifnot("counts" %in% names(x))
+  tps <- jl_types(x)
+  fr <- integer(length(tps))
+  cnts <- x[["counts"]]
+  for (i in 1:nrow(x)) {
+    m <- cnts[[i]]
+    fr[m[, 1]] <- fr[m[, 1]] + m[, 2] 
+  }
+  names(fr) <- tps
+  fr
+}
+
 #' Extract a document feature matrix
 #' 
-#' Throws away all variables and constructs a documnt feature 
-#' matrix with column names from the types of whatever is counted in 'counts'
-#' ans row names from a chosen variable, or doc_id.
-#' 
-#' Note that requesting an inflated document feature matrix turns a 
-#' Matrix::sparseMatrix into a regular base::matrix and may increase 
-#' memory consumption considerably.
+#' Constructs a document feature 
+#' matrix using 'counts' with column names taken from the types attribute 
+#' of 'counts' and row names from 'doc_id' or a user provided variable.
+#'  
+#' If sparse = FALSE (the default) then the result is a CsparseMatrix from the 
+#' Matrix package and if TRUE, a dense base::matrix. Note that Non-sparse 
+#' document feature matrices may become quite large.
 #' 
 #' @param x a tibble
 #' @param rownames_from which variable to take the row names from (default: doc_id) 
-#' @param inflate whether to return a dense base::matrix (TRUE) or a Matrix::sparseMatrix
+#' @param sparse whether to return a sparse (the default) or dense matrix 
 #'
-#' @return a matrix
+#' @return CsparseMatrix (or matrix if sparse = FALSE)
 #' @export
-jl_dfm <- function(x, rownames_from = "doc_id",
-                   inflate = FALSE){
+jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
   stopifnot("counts" %in% names(x))
   j <- lapply(x[["counts"]], function(x) x[,1])
   v <- lapply(x[["counts"]], function(x) x[,2])
@@ -392,14 +456,15 @@ jl_dfm <- function(x, rownames_from = "doc_id",
                             j = unlist(j),
                             x = unlist(v),
                             dimnames = list(doc = rws, feat = cls))
-  if (inflate)
+  if (!sparse)
     m <- as.matrix(m)
   m
 }
 
-## for transforming the existing data sets, use
-# demanif <- data.frame(t(demanif)) %>%
-#   rownames_to_column %>%
-#   extract(rowname, into = c("party", "year", "type"), 
-#           regex = "t([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
-#   jl_count(4:ncol(.))
+conv <- function(olddata){
+  data.frame(t(olddata)) %>%
+  rownames_to_column %>%
+  extract(rowname, into = c("party", "year", "type"), 
+          regex = "t[A-Z]+[.]([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
+  jl_count_from_vars(4:ncol(.))
+}

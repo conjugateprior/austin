@@ -17,9 +17,8 @@ Imports:
     numDeriv,
     methods,
     Matrix,
-    quanteda,
     tokenizers
-License: GPL-2
+License: file LICENSE
 LazyLoad: yes
 Suggests:
     knitr,

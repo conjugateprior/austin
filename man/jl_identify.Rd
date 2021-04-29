@@ -4,16 +4,20 @@
 \alias{jl_identify}
 \title{Add a document identifier}
 \usage{
-jl_identify(x)
+jl_identify(x, v = NULL, drop_original = TRUE)
 }
 \arguments{
-\item{x}{a tibble}
+\item{x}{a data.frame}
+
+\item{v}{variable to be used as a unique identifier (Default: one will be constructed)}
+
+\item{drop_original}{whether to remove v after it is assigned to 'doc_id'}
 }
 \value{
-a tibble
+a jl_df
 }
 \description{
 Adds a variable 'doc_id' to uniquely identify each row. This identifier
-may later, if jl_split is used, contain information about disaggregation 
-level. If the document identifier already exists, overwrite it.
+may later, if jl_expand is used, this will be augmented with  information 
+about disaggregation level.
 }

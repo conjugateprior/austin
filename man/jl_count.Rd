@@ -4,16 +4,12 @@
 \alias{jl_count}
 \title{Tabulate tokens}
 \usage{
-jl_count(x, ..., drop_old_vars = TRUE, drop_unused_vars = TRUE)
+jl_count(x, drop_tokens_after = FALSE)
 }
 \arguments{
-\item{x}{a jl_df with a 'tokens' variable}
+\item{x}{a jl_df object}
 
-\item{...}{tidy-select expressions denoting variables in x}
-
-\item{drop_old_vars}{whether to drop variables denoted in in ... (default: TRUE)}
-
-\item{drop_unused_vars}{whether to unused token levels (default: TRUE)}
+\item{drop_tokens_after}{whether to drop 'tokens' variable after 'counts' computation}
 }
 \value{
 a jl_df with a 'counts' variable
@@ -21,7 +17,7 @@ a jl_df with a 'counts' variable
 \description{
 When ... is unused the tokens variable is turned into a counts variable 
 containing sparse matrices of 
-table counts, one per document.
+table counts, one per document. Any 'tokens' variable is maintained.
 }
 \details{
 When ... contains tidy-select expressions 
@@ -30,12 +26,22 @@ counts of categories/topics named by the variables. Note, counts are
 required and the function will break if real numbers are present. 
 
 If there is anything in ... and drop_old_vars is 
-TRUE (the default) then a new 'counts' replace all everything mentioned in 
+TRUE (the default) then a new 'counts' replace all variables mentioned in 
 the ... expression . 
 When drop_unused_vars is TRUE (the default), if a category/topic records
 a zero count in every row, this level is dropped. 
 
 The ... case is designed for folding existing cross-tabulated data into 
 a jl_df, e.g. hand coded data distributed by the CMP. (Note that in this 
-particular case the data will have to be reinflated to counts).
+particular case the data will have to be reinflated to counts). 
+
+Notes: 
+
+Only if a tidy select expressions are provided are drop_ parameters 
+considered
+
+If tidy-select expressions are provided then any existing 
+'tokens' variable will be removed to ensure that there
+is no mismatch between 'tokens' and 'counts'. (Setting 
+drop_tokens_after = FALSE will not change this behaviour.)
 }
