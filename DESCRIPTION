@@ -1,6 +1,6 @@
 Package: austin
 Type: Package
-Title: Do things with words
+Title: Do Things with Words
 Version: 0.5.0
 Date: 2020-12-23
 Authors@R: person("Will", "Lowe", email = "lowe@hertie-school.org", role = c("aut", "cre"))

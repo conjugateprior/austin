@@ -1,0 +1,125 @@
+---
+title: "Data Structures"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{data_structures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = ""
+)
+```
+
+```{r setup}
+library(austin)
+```
+
+Version 0.5.0 introduces a new data structure `jl_df`, which is as the name 
+suggests a type of `tibble` (which is a type of `data.frame`). Using this 
+structure is entirely optional and does not affect the functioning of the 
+rest of the package.
+
+If you avoid all functions prefixed "jl_" and data structures with names matching "[A-Z][\d\d\d\d]_[.].rda" then you won't notice there's any difference.
+
+## What are these `jl_` things?
+
+A `jl_df` object is a `tibble` whose rows are documents and which has
+a unique identifier column called `doc_id`. It may also contain 
+the text of each document in a 'text' variable, the tokens from each text 
+in a 'tokens' variable, and the document frequency of each token's type in
+a 'counts' variables. These are are optional and can appear in any combination.
+
+The structure is loosely based on the spatial library `{sf}`, which was a data 
+frame with polygon information hidden in a list column. This is in contrast to its predecessor `{sp}` which was a polygons object which hid a data frame inside it
+as an attribute. In this sense, `jl_df` is `{sf}`'s  to `{quanteda}'s `corpus` `{sp}`
+more 
+
+In this respect
+it is like a {quanteda} `corpus` with `docvars` and unlike a {tidytext} structure
+because it is document-centric not token-centric. However, it reverses the 
+quanteda's basic design principle. Objects of type `corpus`, `tokens`, `dfm`,
+etc. are text structures that store document level covariates 'inside' them as 
+an attribute. 
+
+From the user perspective a 'text' variable is a character vector and a 'tokens' 
+variable is a list of character vectors (and therefore a list column).
+A 'counts' variable is a list (column). None of these need be dealt with directly. 
+
+Subsets of documents can be selected using `jl_filter` which works like 
+`{dplyr}`'s `filter`.
+
+Comment: it might be better to offer 'counts'-reindexing generics for `filter`, 
+and `slice_*` (the unexported `slice_rows` would be the natural place to interve)
+
+### 'counts'
+
+You can get the types in a 'counts' variable 
+using `jl_types` (which works like `levels`), their 
+corpus frequencies with `jl_freqs`, and their document lengths in tokens
+using `jl_lengths` (in analogy to `base::lengths`). 
+
+'counts' can be promoted to being regular data frame columns using 
+`jl_promote_counts` (the information also stays in 'counts'), 
+and demoted (removed) using `jl_demote_counts`.
+
+If a `jl_df` is grouped using `{dplyr}`'s `group_by` then `jl_collapse` will
+collapse the counts over the groups. This is the same as collapsing groups 
+of rows in a contingency table.
+
+A pure contingency table or 'document feature matrix' can be extracted from a 
+`jl_df` using `jl_dfm`. This has row names of the user's choice and column 
+names from the 'types' dictionary.
+
+### Constructing a 'counts' variable
+
+When 'tokens' of any kind are present, `jl_count` will construct a corresponding 
+'counts' variable from them. When they are not, but some columns of a data frame 
+can be interpreted as countable types and their contents as the counts of these
+in each document, then `jl_count_from_vars` can be used to populate a 
+'counts' variable from selected columns.
+
+### Implementation
+
+A 'counts' variable is implemented as a list column with a 
+'types' attribute containing a character vector representing what is counted.
+Currently each document's element of 'counts' is a K x 2 matrix where the first 
+column represents the index of the type being counted and the second column 
+the number of times that type of token appeared. Each of these matrices is 
+basically a 1-indexed matrix representation of the LDAC-C sparse matrix format.
+
+### 'tokens'
+
+`{austin}` has a very wide understanding of token: it is any element 
+that is derived by a splitting text into smaller units and processing them. 
+In this sense, words and punctuation are tokens, but also ngrams, word stems, 
+and category/topic labels derived by querying words or phrases with a
+content analysis dictionary.
+
+It also prefers not to do the tokenization itself. The default setting 
+offers functions from `{tokenizers}` and the help pages explain how to use 
+your own, e.g. `{quanteda}`'s `tokens` function. 
+
+### 'text'
+
+Text represents complete document texts. Sometimes it is useful to change the 
+unit of analysis by redefining what a document is. One natural way is to break 
+each document into parts, e.g. sentences, paragraphs, or other text-based 
+unit, and define these as documents. This is done by `jl_expand`. Currently 
+this drops any existing 'tokens' and 'counts' and augments the doc_id with the 
+level of split. 
+
+Comment: Perhaps it should not drop 'tokens' and 'counts', or we should offer 
+a parameter option.
+
+
+
+
+
+
+
+
+

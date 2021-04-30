@@ -6,7 +6,8 @@
 
  [![codecov](https://codecov.io/gh/conjugateprior/austin/branch/master/graph/badge.svg)](https://codecov.io/gh/conjugateprior/austin)
 
-Austin fits Wordscores and Wordfish models to document-feature matrices.
+Austin fits Wordscores and Wordfish models to document-feature matrices. It 
+also keep some useful data sets around.
 
 ## Installation
 
