@@ -205,16 +205,18 @@ jl_count_from_vars <- function(x, ...,
 #' @export
 jl_identify <- function(x, v = NULL, drop_original = TRUE){
   if (is.null(v)) {
-    if ("doc_id" %in% names(x))
+    if ("doc_id" %in% names(x)) {
       message("Overwriting existing 'doc_id'")
-    x <- tibble::add_column(x, doc_id = as.character(1:nrow(x)), .before = 1)
+      x[["doc_id"]] <- as.character(1:nrow(x))
+    } else {
+      x <- tibble::add_column(x, doc_id = as.character(1:nrow(x)), .before = 1)
+    }
     return(x)
   }
   
   check_length <- function(z) 
     if (length(z) != nrow(x))
-      stop("Proposed doc_id is not the same length as the number of ", 
-           "rows")
+      stop("Proposed doc_id is not the same length as the number of rows")
   check_uniqueness <- function(z)
     if (length(unique(z)) != nrow(x))
       stop("Proposed doc_id is not a unique identifier")
@@ -227,7 +229,12 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
     # they are handing us a variable name
     check_length(x[[v]])
     check_uniqueness(x[[v]])
-    x <- tibble::add_column(x, doc_id = x[[v]], .before = 1)
+    if ("doc_id" %in% names(x)) {
+      message("Overwriting existing 'doc_id'")
+      x[["doc_id"]] <- as.character(1:nrow(x))
+    } else {
+      x <- tibble::add_column(x, doc_id = as.character(x[[v]]), .before = 1)
+    }
     if (drop_original && v != "doc_id")
       x[[v]] <- NULL
   }
