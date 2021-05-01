@@ -45,6 +45,8 @@ ensure_jl_df <- function(x){
   stopifnot(is.data.frame(x))
   if (is.data.frame(x) && !tibble::is_tibble(x))
     x <- tibble::as_tibble(x)
+  if (!("doc_id" %in% names(x)))
+    x <- jl_identify(x) # add a doc_id if there's not already one
   if (!("jl_df" %in% class(x)))
     class(x) <- c("jl_df", class(x))
   x
@@ -189,8 +191,11 @@ jl_count_from_vars <- function(x, ...,
 #' Add a document identifier
 #'
 #' Adds a variable 'doc_id' to uniquely identify each row. This identifier
-#' may later, if jl_expand is used, this will be augmented with  information 
+#' may later, if jl_expand is used, this will be augmented with information 
 #' about disaggregation level. 
+#'
+#' Note: v may be the name of a variable or an entirely new character variable
+#' of the appropriate length and uniqueness.
 #'
 #' @param x a data.frame 
 #' @param v variable to be used as a unique identifier (Default: one will be constructed)
@@ -202,30 +207,31 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
   if (is.null(v)) {
     if ("doc_id" %in% names(x))
       message("Overwriting existing 'doc_id'")
-    tt <- tibble::add_column(x, doc_id = 1:nrow(x), .before = 1)
-    return(ensure_jl_df(tt))
+    x <- tibble::add_column(x, doc_id = as.character(1:nrow(x)), .before = 1)
+    return(x)
   }
+  
   check_length <- function(z) 
     if (length(z) != nrow(x))
-      stop("v parameter does not have the same length as the number of ", 
+      stop("Proposed doc_id is not the same length as the number of ", 
            "rows")
   check_uniqueness <- function(z)
     if (length(unique(z)) != nrow(x))
-      stop("v parameter is not a unique identifier")
+      stop("Proposed doc_id is not a unique identifier")
   
   if (length(v) > 1) { # they are handing us a whole vector 
     check_length(v)
     check_uniqueness(v)
-    x[["doc_id"]] <- v
+    x <- tibble::add_column(x, doc_id = v, .before = 1)
   } else { 
     # they are handing us a variable name
     check_length(x[[v]])
     check_uniqueness(x[[v]])
-    x[["doc_id"]] <- x[[v]]
+    x <- tibble::add_column(x, doc_id = x[[v]], .before = 1)
     if (drop_original && v != "doc_id")
       x[[v]] <- NULL
   }
-  ensure_jl_df(x)
+  x
 }
 
 
@@ -361,8 +367,9 @@ jl_promote_counts <- function(x, prefix = NULL){
     voc <- paste0(prefix, voc)
   inter <- intersect(names(x), voc)
   if (length(inter != 0)) # forbid overriding
-    stop(paste("'counts' vocabulary overlaps existing variables:",
-               inter, "\nRemove or rename the overlap or consider setting prefix"))
+    stop("'counts' vocabulary overlaps existing variables: [",
+         paste(inter, collapse = ","), 
+         "] Maybe set a prefix?")
   dd <- dplyr::as_tibble(jl_dfm(x, sparse = FALSE))
   if (!is.null(prefix))
     colnames(dd) <- voc
@@ -450,7 +457,7 @@ jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
   v <- lapply(x[["counts"]], function(x) x[,2])
   rws <- NULL
   if (!is.null(rownames_from))
-    rws <- x[[rownames_from]]
+    rws <- as.character(x[[rownames_from]])
   cls <- jl_types(x)
   m <- Matrix::sparseMatrix(rep(1:nrow(x), lengths(j)),
                             j = unlist(j),

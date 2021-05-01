@@ -18,6 +18,10 @@ a jl_df
 }
 \description{
 Adds a variable 'doc_id' to uniquely identify each row. This identifier
-may later, if jl_expand is used, this will be augmented with  information 
+may later, if jl_expand is used, this will be augmented with information 
 about disaggregation level.
+}
+\details{
+Note: v may be the name of a variable or an entirely new character variable
+of the appropriate length and uniqueness.
 }
