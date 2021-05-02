@@ -40,12 +40,26 @@
 # 11. Get token count per document as a vector from a jl_df
 # 12. filter out documents by facts about counts, e.g. minimum length
 
+# helper
+has <- function(x, which){
+  any(which == names(x))
+}
+stop_if_no <- function(x, which, message = NULL){ 
+  if (!has(x, which)) {
+    if (!is.null(message))
+      stop(message)
+    else
+      stop("Object has no '", which, "' variable")
+  }
+}
+
+
 
 ensure_jl_df <- function(x){
   stopifnot(is.data.frame(x))
   if (is.data.frame(x) && !tibble::is_tibble(x))
     x <- tibble::as_tibble(x)
-  if (!("doc_id" %in% names(x)))
+  if (!(has(x, "doc_id")))
     x <- jl_identify(x) # add a doc_id if there's not already one
   if (!("jl_df" %in% class(x)))
     class(x) <- c("jl_df", class(x))
@@ -103,9 +117,9 @@ jl_tokenize <- function(x, tokenizer = tokenizers::tokenize_words, ...){
 #' @return a vector of type values
 #' @export
 jl_types <- function(x){
-  if ("counts" %in% names(x))
+  if (has(x, "counts"))
     attr(x[["counts"]], "types")
-  else if ("tokens" %in% names(x))
+  else if (has(x, "tokens"))
     levels(unique(unlist(x[["tokens"]])))
   else
     stop("neither 'counts' nor 'tokens' variables exist")
@@ -124,7 +138,7 @@ jl_types <- function(x){
 #' @return a jl_df with a 'counts' variable
 #' @export
 jl_count <- function(x, drop_tokens_after = FALSE){
-  stopifnot("tokens" %in% names(x))
+  stop_if_no(x, "tokens")
   voc <- levels(unique(unlist(x[["tokens"]])))
   n <- length(voc)
   ff1 <- function(x){
@@ -169,7 +183,7 @@ jl_count <- function(x, drop_tokens_after = FALSE){
 #' @export
 jl_count_from_vars <- function(x, ..., 
                                drop_unused_vars = TRUE){ 
-  if ("tokens" %in% names(x)) {
+  if (has(x, "tokens")) {
     message("Removing existing 'tokens' variable")
     x[["tokens"]] <- NULL
   }
@@ -205,7 +219,7 @@ jl_count_from_vars <- function(x, ...,
 #' @export
 jl_identify <- function(x, v = NULL, drop_original = TRUE){
   if (is.null(v)) {
-    if ("doc_id" %in% names(x)) {
+    if (has(x, "doc_id")) {
       message("Overwriting existing 'doc_id'")
       x[["doc_id"]] <- as.character(1:nrow(x))
     } else {
@@ -213,13 +227,15 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
     }
     return(x)
   }
-  
-  check_length <- function(z) 
+    
+  check_length <- function(z){ 
     if (length(z) != nrow(x))
       stop("Proposed doc_id is not the same length as the number of rows")
-  check_uniqueness <- function(z)
+  }
+  check_uniqueness <- function(z){
     if (length(unique(z)) != nrow(x))
       stop("Proposed doc_id is not a unique identifier")
+  }
   
   if (length(v) > 1) { # they are handing us a whole vector 
     check_length(v)
@@ -229,7 +245,7 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
     # they are handing us a variable name
     check_length(x[[v]])
     check_uniqueness(x[[v]])
-    if ("doc_id" %in% names(x)) {
+    if (has(x, "doc_id")) {
       message("Overwriting existing 'doc_id'")
       x[["doc_id"]] <- as.character(1:nrow(x))
     } else {
@@ -260,12 +276,12 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
 #' @return a tibble with new doc_id
 #' @export
 jl_expand <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
-  stopifnot("text" %in% names(x))
-  if ("tokens" %in% names(x)) {
+  stop_if_no(x, "text")
+  if (has(x, "tokens")) {
     warning("Dropping existing 'tokens' variable")
     x[["tokens"]] <- NULL
   }
-  if ("counts" %in% names(x)) {
+  if (has(x, "counts")) { 
     warning("Dropping existing 'counts' variable")
     x[["counts"]] <- NULL
   }
@@ -326,7 +342,7 @@ jl_reindex <- function(res){
 #' @export
 jl_filter <- function(x, ..., .preserve = FALSE){
   res <- dplyr::filter(x, ..., .preserve = .preserve)
-  if ("counts" %in% names(res))
+  if (has(x, "counts")) 
     res <- jl_reindex(res)
   ensure_jl_df(res)
 }
@@ -368,7 +384,7 @@ jl_collapse <- function(x){
 #' @return a jl_df
 #' @export
 jl_promote_counts <- function(x, prefix = NULL){
-  stopifnot("counts" %in% names(x))
+  stop_if_no(x, "counts")
   voc <- attr(x[["counts"]], "types")
   if (!is.null(prefix))
     voc <- paste0(prefix, voc)
@@ -412,9 +428,9 @@ jl_demote_counts <- function(x, prefix = NULL){
 #' @return a vector of token counts
 #' @export
 jl_lengths <- function(x){
-  if ("counts" %in% names(x))
+  if (has(x, "counts"))
     vapply(x[["counts"]], function(x) sum(x[,2]), FUN.VALUE = c(0L))
-  else if ("tokens" %in% names(x))
+  else if (has(x, "tokens"))
     vapply(x[["tokens"]], function(x) length(x), FUN.VALUE = c(0L))
   else
     stop("neither 'counts' nor 'tokens' exist")
@@ -430,7 +446,7 @@ jl_lengths <- function(x){
 #' @return a vector of type counts
 #' @export
 jl_freqs <- function(x){
-  stopifnot("counts" %in% names(x))
+  stop_if_no(x, "counts")
   tps <- jl_types(x)
   fr <- integer(length(tps))
   cnts <- x[["counts"]]
@@ -459,7 +475,7 @@ jl_freqs <- function(x){
 #' @return CsparseMatrix (or matrix if sparse = FALSE)
 #' @export
 jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
-  stopifnot("counts" %in% names(x))
+  stop_if_no(x, "counts")
   j <- lapply(x[["counts"]], function(x) x[,1])
   v <- lapply(x[["counts"]], function(x) x[,2])
   rws <- NULL
@@ -474,11 +490,3 @@ jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
     m <- as.matrix(m)
   m
 }
-# 
-# conv <- function(olddata){
-#   data.frame(t(olddata)) %>%
-#   rownames_to_column %>%
-#   extract(rowname, into = c("party", "year", "type"), 
-#           regex = "t[A-Z]+[.]([A-Z]+)(\\d\\d\\d\\d)(.*)") %>% 
-#   jl_count_from_vars(4:ncol(.))
-# }
