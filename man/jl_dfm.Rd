@@ -4,17 +4,17 @@
 \alias{jl_dfm}
 \title{Extract a document feature matrix}
 \usage{
-jl_dfm(x, rownames_from = "doc_id", sparse = TRUE)
+jl_dfm(x, rownames_from = NULL, sparse = TRUE)
 }
 \arguments{
 \item{x}{a tibble}
 
-\item{rownames_from}{which variable to take the row names from (default: doc_id)}
+\item{rownames_from}{column of x to use as rownames}
 
 \item{sparse}{whether to return a sparse (the default) or dense matrix}
 }
 \value{
-CsparseMatrix (or matrix if sparse = FALSE)
+Matrix::CsparseMatrix (or base::matrix if sparse = FALSE)
 }
 \description{
 Constructs a document feature 

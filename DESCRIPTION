@@ -17,7 +17,8 @@ Imports:
     numDeriv,
     methods,
     Matrix,
-    tokenizers
+    tokenizers,
+    irlba
 License: file LICENSE
 LazyLoad: yes
 Suggests:

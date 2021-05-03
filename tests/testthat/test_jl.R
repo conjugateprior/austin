@@ -39,7 +39,7 @@ test_that("jl_dfm", {
   refs_d <- jl_dfm(refs)
   expect_equal(dim(refs_d), c(2, 4898))
   expect_identical(jl_types(refs), colnames(refs_d))
-  expect_identical(refs[["doc_id"]], rownames(refs_d))
+  # rownames are now optional anyway
 })
 
 test_that("jl_expand", {})

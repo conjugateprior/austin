@@ -26,4 +26,6 @@ By default tokenizer choice this function makes
 each paragraph a new document. Replace this function with your preferred 
 splitting function. It should return a list of character vectors. To 
 add extra arguments to the tokenizer function call, put them in ...
+
+If 'doc_id' is present it is augmented to show the nesting.
 }

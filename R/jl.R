@@ -13,8 +13,7 @@
 # we are not in the business of tokenizing, just storing and moving tokens
 #   and generating counts
 # the fundamental data structure is a tibble with some optional list columns
-# structure: a jl_df contains a 
-#   doc_id - a unique identifier 
+# structure: a jl_df contains either or both of
 #   tokens - a list column containing character vectors
 #   counts - a list column containing matrices and an attribute with the types list
 #
@@ -59,8 +58,6 @@ ensure_jl_df <- function(x){
   stopifnot(is.data.frame(x))
   if (is.data.frame(x) && !tibble::is_tibble(x))
     x <- tibble::as_tibble(x)
-  if (!(has(x, "doc_id")))
-    x <- jl_identify(x) # add a doc_id if there's not already one
   if (!("jl_df" %in% class(x)))
     class(x) <- c("jl_df", class(x))
   x
@@ -269,6 +266,8 @@ jl_identify <- function(x, v = NULL, drop_original = TRUE){
 #' splitting function. It should return a list of character vectors. To 
 #' add extra arguments to the tokenizer function call, put them in ...
 #'
+#' If 'doc_id' is present it is augmented to show the nesting.
+#'
 #' @param x a tibble
 #' @param tokenizer a function that splits each text
 #' @param ... extra arguments to give to tokenizer
@@ -288,10 +287,10 @@ jl_expand <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
   
   spls <- tokenizer(x[["text"]], ...)
   spl_f <- function(r){
-    new_doc_id <- paste0(x[["doc_id"]][r], ".", 1:length(spls[[r]]))
-    dplyr::tibble(doc_id = new_doc_id,
-                  x[r, setdiff(names(x), c("text", "doc_id"))],
-                  text = spls[[r]])
+    nms <- setdiff(names(x), c("text", "doc_id"))
+    xx <- dplyr::tibble(x[r, nms], text = spls[[r]]) # text at the end
+    if (has(x, "doc_id")) # and new doc_id if needed
+      xx[["doc_id"]] <- paste0(x[["doc_id"]][r], ".", 1:length(spls[[r]]))
   }
   x <- dplyr::bind_rows(lapply(1:nrow(x), spl_f))
   ensure_jl_df(x)
@@ -469,12 +468,17 @@ jl_freqs <- function(x){
 #' document feature matrices may become quite large.
 #' 
 #' @param x a tibble
-#' @param rownames_from which variable to take the row names from (default: doc_id) 
+#' @param rownames_from column of x to use as rownames
 #' @param sparse whether to return a sparse (the default) or dense matrix 
 #'
-#' @return CsparseMatrix (or matrix if sparse = FALSE)
+#' @return Matrix::dgCMatrix (or base::matrix if sparse = FALSE)
 #' @export
-jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
+#' 
+#' @example 
+#' data(LBG2003)
+#' jl_dfm(LBG2003, rownames_from = "doc_id")
+#' 
+jl_dfm <- function(x, rownames_from = NULL, sparse = TRUE){
   stop_if_no(x, "counts")
   j <- lapply(x[["counts"]], function(x) x[,1])
   v <- lapply(x[["counts"]], function(x) x[,2])
@@ -485,8 +489,199 @@ jl_dfm <- function(x, rownames_from = "doc_id", sparse = TRUE){
   m <- Matrix::sparseMatrix(rep(1:nrow(x), lengths(j)),
                             j = unlist(j),
                             x = unlist(v),
-                            dimnames = list(doc = rws, feat = cls))
+                            dimnames = list(docs = rws, words = cls))
   if (!sparse)
     m <- as.matrix(m)
   m
 }
+
+is_sparse <- function(x){
+  is(x, "sparseMatrix")
+}
+
+############# models
+
+#' Compute Positions via Reciprocal Averaging
+#'
+#' This function runs the simplest form of reciprocal averaging and produces
+#' estaimted theta (document) and beta (word) positions. Theta is mean zero 
+#' and unit variance. Beta is mean zero.
+#' 
+#' Why would you use this function? Perhaps because it is like doing 
+#' 1-dimensional correspondence analysis but never computes a full SVD
+#' and never stores more than one copy of the input data, which can be 
+#' sparse. Hence it saves memory. 
+#' 
+#' Why would you not use this function? Because it trades space for time. 
+#' It's usually quicker to run SVD on the (dense) residuals matrixes as 
+#' regular correspondence is defined as doing. Also this function will not get 
+#' recover than one set of document and feature positions.
+#'
+#' @param x a matrix 
+#' @param dir Require that document positions are such that dir[1] < dir[2]
+#' @param tol the largest position difference small enough to stop iterating
+#' @param verbose whether to report iterations and differences
+#' @param iter.max maximum number of iterations regardless of tol
+#'
+#' @return a list of theta and beta estimates
+#' @export unit mean zero unit standard deviation scores for documents and features
+#' @examples
+#' 
+#' data(LBG2003)
+#' lbg_dfm <- jl_dfm(LBG2003, rownames_from = "doc_id"))
+#' res <- jl_reciprocal_average(lbg_dfm)
+#' res$theta # the six document scores
+jl_reciprocal_average <- function(x, dir = c(1,nrow(x)), 
+                                  tol = 0.001, verbose = FALSE, iter.max = 50){
+  fix_scale <- function(x){
+    m <- sum(x) / length(x)
+    s <- sqrt(sum((x - m)^2) / length(x))
+    (x - m) / s
+  }
+  col_n <- colSums(x)
+  row_n <- rowSums(x)
+  theta <- fix_scale(rnorm(length(row_n)))
+  beta <- fix_scale(rnorm(length(col_n)))
+  theta <- fix_scale(theta)
+  if (theta[dir[1]] > theta[dir[2]])
+    theta <- theta * (-1)
+
+  old_theta <- theta + 0.1
+  i <- 0
+  while (1) {
+    d <- max(old_theta - theta)
+    if (d < tol) {
+      message("max(old_theta - theta) < ", tol, " after ", i, " iterations\n")
+      break
+    }
+    if (i > iter.max) {
+      message("Iterations exceeded ", iter.max, "\n")
+      break
+    }
+    if (verbose)
+      cat(i, ": tol = ", d, "\n")
+    
+    old_theta <- theta
+    theta <- as.vector(sweep(x, MARGIN = 1, STATS = row_n, FUN = `/`) %*% beta)
+    theta <- fix_scale(theta)
+    beta <- as.vector(t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
+    beta <- fix_scale(beta)
+    i <- i + 1
+  }
+  # fix direction
+  if (theta[dir[1]] > theta[dir[2]]) {
+    theta <- theta * (-1)
+    beta <- beta * (-1)
+  }
+  list(theta = theta, beta = beta)
+}
+
+fix_scale <- function(x){
+  m <- sum(x) / length(x)
+  s <- sqrt(sum((x - m)^2) / length(x))
+  (x - m) / s
+}
+
+pop_sd <- function(x) {
+  sqrt(sd(x)^2 * (length(x) - 1) / length(x))
+}
+
+lbg_maker <- function(n = 10, gap = 2){
+  v <- c(2, 3, 10, 22, 45, 78, 115, 146, 158, 146, 115, 78, 45, 22, 10, 3, 2)
+  vlen <- length(v)
+  cols <- vlen + (n-1)*gap
+  res <- lapply(1:n, function(g){ 
+    vv <- integer(cols)
+    st <- 1 + (g-1)*gap
+    vv[st:(st+vlen-1)] <- v 
+    vv
+  })
+  m <- Matrix::Matrix(as.matrix(do.call(rbind, res)), sparse = TRUE)
+  dimnames(m) <- list(doc = paste0("D",
+                                   1:nrow(m)),
+                                   feat = paste0("W", 1:ncol(m)))
+  m
+}
+
+#' Compute Positions via Reciprocal Averaging
+#'
+#' This function runs the simplest form of reciprocal averaging and produces
+#' estaimted theta (document) and beta (word) positions. Theta is mean zero 
+#' and unit variance. Beta is mean zero.
+#' 
+#' Why would you use this function? Perhaps because it is like doing 
+#' 1-dimensional correspondence analysis but never computes a full SVD
+#' and never stores more than one copy of the input data, which can be 
+#' sparse. Hence it saves memory. 
+#' 
+#' Why would you not use this function? Because it trades space for time. 
+#' It's usually quicker to run SVD on the (dense) residuals matrixes as 
+#' regular correspondence is defined as doing. Also this function will not get 
+#' recover than one set of document and feature positions.
+#'
+#' @param x a matrix 
+#' @param masked_theta fixed and estimated values for theta
+#' @param dir Require that document positions are such that dir[1] < dir[2]
+#' @param tol the largest position difference small enough to stop iterating
+#' @param verbose whether to report iterations and differences
+#' @param iter.max maximum number of iterations regardless of tol
+#'
+#' @return a list of theta and beta estimates
+#' @export unit mean zero unit standard deviation scores for documents and features
+#' @examples
+#' 
+#' data(LBG2003)
+#' lbg_dfm <- jl_dfm(LBG2003, rownames_from = "doc_id"))
+#' res <- jl_reciprocal_average(lbg_dfm)
+#' res$theta # the six document scores
+jl_reciprocal_average_masked <- function(x, masked_theta,
+                                         dir = c(1,nrow(x)), 
+                                         tol = 0.001, 
+                                         verbose = FALSE, 
+                                         iter.max = 50){
+  fixed <- which(!is.na(masked_theta))
+  free <- which(is.na(masked_theta))
+
+  col_n <- colSums(x)
+  row_n <- rowSums(x)
+  theta <- masked_theta
+  theta[free] <- rnorm(length(free), 
+                       mean = mean(theta[fixed]), sd = sd(theta[fixed]))
+  theta <- fix_scale(theta)
+  beta <- fix_scale(rnorm(length(col_n)))
+  
+  # |fixed| > 2 should over constrain so this is not needed
+  #if (theta[dir[1]] > theta[dir[2]])
+  #  theta <- theta * (-1)
+  #
+  old_theta <- theta + 0.1
+  i <- 0
+  while (1) {
+    d <- max(old_theta[free] - theta[free])
+    if (d < tol) {
+      message("max(old_theta[free] - theta[free]) < ", tol, " after ", i, " iterations\n")
+      break
+    }
+    if (i > iter.max) {
+      message("Iterations exceeded ", iter.max, "\n")
+      break
+    }
+    if (verbose)
+      cat(i, ": tol = ", d, "\n")
+    
+    old_theta <- theta
+    theta[free] <- as.vector(sweep(x, MARGIN = 1, STATS = row_n, FUN = `/`) %*% beta)[free]
+    print(theta[free])
+    theta <- fix_scale(theta)
+    beta <- as.vector(t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
+    beta <- fix_scale(beta)
+    i <- i + 1
+  }
+  # fix direction
+  #if (theta[dir[1]] > theta[dir[2]]) {
+  #  theta <- theta * (-1)
+  #  beta <- beta * (-1)
+  #}
+  list(theta = theta, beta = beta)
+}
+
