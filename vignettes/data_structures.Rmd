@@ -1,5 +1,5 @@
 ---
-title: "Data Structures"
+title: "Data Structures (in Development)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Data Structures}
@@ -20,15 +20,14 @@ library(austin)
 
 Version 0.5.0 introduces a new data structure `jl_df`, which is as the name 
 suggests a type of `tibble` (which is a type of `data.frame`). Using this 
-structure is entirely optional and does not affect the functioning of the 
+structure is *entirely optional* and does not affect the functioning of the 
 rest of the package.
 
-If you avoid all functions prefixed "jl_" and data structures with names matching "[A-Z][\d\d\d\d]_[.].rda" then you won't notice there's any difference.
+If you avoid all functions prefixed `jl_` and data structures with names matching `[A-Z][\d\d\d\d]_[.].rda` then you won't notice there's any difference.
 
 ## What are these `jl_` things?
 
-A `jl_df` object is a `tibble` whose rows are documents and which has
-a unique identifier column called `doc_id`. It may also contain 
+A `jl_df` object is a `tibble` whose rows are documents. It may also contain 
 the text of each document in a 'text' variable, the tokens from each text 
 in a 'tokens' variable, and the document frequency of each token's type in
 a 'counts' variables. These are are optional and can appear in any combination.
@@ -36,11 +35,7 @@ a 'counts' variables. These are are optional and can appear in any combination.
 The structure is loosely based on the spatial library `{sf}`, which was a data 
 frame with polygon information hidden in a list column. This is in contrast to its predecessor `{sp}` which was a polygons object which hid a data frame inside it
 as an attribute. In this sense, `jl_df` is `{sf}`'s  to `{quanteda}'s `corpus` `{sp}`
-more 
-
-In this respect
-it is like a {quanteda} `corpus` with `docvars` and unlike a {tidytext} structure
-because it is document-centric not token-centric. However, it reverses the 
+more. It reverses the 
 quanteda's basic design principle. Objects of type `corpus`, `tokens`, `dfm`,
 etc. are text structures that store document level covariates 'inside' them as 
 an attribute. 
@@ -114,12 +109,4 @@ level of split.
 
 Comment: Perhaps it should not drop 'tokens' and 'counts', or we should offer 
 a parameter option.
-
-
-
-
-
-
-
-
 

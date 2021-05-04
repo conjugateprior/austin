@@ -14,7 +14,7 @@ jl_dfm(x, rownames_from = NULL, sparse = TRUE)
 \item{sparse}{whether to return a sparse (the default) or dense matrix}
 }
 \value{
-Matrix::CsparseMatrix (or base::matrix if sparse = FALSE)
+Matrix::dgCMatrix (or base::matrix if sparse = FALSE)
 }
 \description{
 Constructs a document feature 
@@ -24,4 +24,9 @@ of 'counts' and row names from 'doc_id' or a user provided variable.
 If sparse = FALSE (the default) then the result is a CsparseMatrix from the 
 Matrix package and if TRUE, a dense base::matrix. Note that Non-sparse 
 document feature matrices may become quite large.
+}
+\examples{
+data(LBG2003)
+jl_dfm(LBG2003, rownames_from = "doc_id")
+
 }

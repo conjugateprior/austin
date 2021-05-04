@@ -474,7 +474,7 @@ jl_freqs <- function(x){
 #' @return Matrix::dgCMatrix (or base::matrix if sparse = FALSE)
 #' @export
 #' 
-#' @example 
+#' @examples
 #' data(LBG2003)
 #' jl_dfm(LBG2003, rownames_from = "doc_id")
 #' 
@@ -524,11 +524,12 @@ is_sparse <- function(x){
 #' @param iter.max maximum number of iterations regardless of tol
 #'
 #' @return a list of theta and beta estimates
-#' @export unit mean zero unit standard deviation scores for documents and features
+#' @export 
+#' @note HIGHLY EXPERIMENTAL
 #' @examples
 #' 
 #' data(LBG2003)
-#' lbg_dfm <- jl_dfm(LBG2003, rownames_from = "doc_id"))
+#' lbg_dfm <- jl_dfm(LBG2003, rownames_from = "doc_id")
 #' res <- jl_reciprocal_average(lbg_dfm)
 #' res$theta # the six document scores
 jl_reciprocal_average <- function(x, dir = c(1,nrow(x)), 
@@ -538,8 +539,8 @@ jl_reciprocal_average <- function(x, dir = c(1,nrow(x)),
     s <- sqrt(sum((x - m)^2) / length(x))
     (x - m) / s
   }
-  col_n <- colSums(x)
-  row_n <- rowSums(x)
+  col_n <- Matrix::colSums(x) # works for base matrices but not vice versa
+  row_n <- Matrix::rowSums(x)
   theta <- fix_scale(rnorm(length(row_n)))
   beta <- fix_scale(rnorm(length(col_n)))
   theta <- fix_scale(theta)
@@ -564,7 +565,7 @@ jl_reciprocal_average <- function(x, dir = c(1,nrow(x)),
     old_theta <- theta
     theta <- as.vector(sweep(x, MARGIN = 1, STATS = row_n, FUN = `/`) %*% beta)
     theta <- fix_scale(theta)
-    beta <- as.vector(t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
+    beta <- as.vector(Matrix::t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
     beta <- fix_scale(beta)
     i <- i + 1
   }
@@ -603,37 +604,6 @@ lbg_maker <- function(n = 10, gap = 2){
   m
 }
 
-#' Compute Positions via Reciprocal Averaging
-#'
-#' This function runs the simplest form of reciprocal averaging and produces
-#' estaimted theta (document) and beta (word) positions. Theta is mean zero 
-#' and unit variance. Beta is mean zero.
-#' 
-#' Why would you use this function? Perhaps because it is like doing 
-#' 1-dimensional correspondence analysis but never computes a full SVD
-#' and never stores more than one copy of the input data, which can be 
-#' sparse. Hence it saves memory. 
-#' 
-#' Why would you not use this function? Because it trades space for time. 
-#' It's usually quicker to run SVD on the (dense) residuals matrixes as 
-#' regular correspondence is defined as doing. Also this function will not get 
-#' recover than one set of document and feature positions.
-#'
-#' @param x a matrix 
-#' @param masked_theta fixed and estimated values for theta
-#' @param dir Require that document positions are such that dir[1] < dir[2]
-#' @param tol the largest position difference small enough to stop iterating
-#' @param verbose whether to report iterations and differences
-#' @param iter.max maximum number of iterations regardless of tol
-#'
-#' @return a list of theta and beta estimates
-#' @export unit mean zero unit standard deviation scores for documents and features
-#' @examples
-#' 
-#' data(LBG2003)
-#' lbg_dfm <- jl_dfm(LBG2003, rownames_from = "doc_id"))
-#' res <- jl_reciprocal_average(lbg_dfm)
-#' res$theta # the six document scores
 jl_reciprocal_average_masked <- function(x, masked_theta,
                                          dir = c(1,nrow(x)), 
                                          tol = 0.001, 
@@ -642,8 +612,8 @@ jl_reciprocal_average_masked <- function(x, masked_theta,
   fixed <- which(!is.na(masked_theta))
   free <- which(is.na(masked_theta))
 
-  col_n <- colSums(x)
-  row_n <- rowSums(x)
+  col_n <- Matrix::colSums(x) # works for base matrices but not vice versa
+  row_n <- Matrix::rowSums(x)
   theta <- masked_theta
   theta[free] <- rnorm(length(free), 
                        mean = mean(theta[fixed]), sd = sd(theta[fixed]))
@@ -673,7 +643,7 @@ jl_reciprocal_average_masked <- function(x, masked_theta,
     theta[free] <- as.vector(sweep(x, MARGIN = 1, STATS = row_n, FUN = `/`) %*% beta)[free]
     print(theta[free])
     theta <- fix_scale(theta)
-    beta <- as.vector(t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
+    beta <- as.vector(Matrix::t(sweep(x, MARGIN = 2, STATS = col_n, FUN = `/`)) %*% theta)
     beta <- fix_scale(beta)
     i <- i + 1
   }
