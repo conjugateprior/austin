@@ -109,7 +109,7 @@ jl_tokenize <- function(x, tokenizer = tokenizers::tokenize_words, ...){
 #' Returns the list of types that are counted in 'counts'. If 
 #' 'counts' does not exist, does the calculation for 'tokens' on the fly
 #'
-#' @param x a tibble
+#' @param x a jl_df
 #'
 #' @return a vector of type values
 #' @export
@@ -286,11 +286,16 @@ jl_expand <- function(x, tokenizer = tokenizers::tokenize_paragraphs, ...){
   }
   
   spls <- tokenizer(x[["text"]], ...)
-  spl_f <- function(r){
-    nms <- setdiff(names(x), c("text", "doc_id"))
+  spls <- lapply(spls, function(d){ 
+    keep <- grepl("[[:alnum:]]|[[:punct:]]]", d)
+    d[keep]
+  })
+  nms <- setdiff(names(x), c("text", "doc_id"))
+  spl_f <- function(r){ 
     xx <- dplyr::tibble(x[r, nms], text = spls[[r]]) # text at the end
     if (has(x, "doc_id")) # and new doc_id if needed
       xx[["doc_id"]] <- paste0(x[["doc_id"]][r], ".", 1:length(spls[[r]]))
+    xx
   }
   x <- dplyr::bind_rows(lapply(1:nrow(x), spl_f))
   ensure_jl_df(x)
